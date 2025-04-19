@@ -1,0 +1,75 @@
+{{ define "content" }}
+<div>
+  <!-- Thread Header -->
+  <div style="margin-bottom: 5px;">
+    <span style="font-size: 12pt; color: #800000;">{{ .Thread.Title }}</span>
+  </div>
+
+  <div class="board-nav">
+    [<a href="/">Home</a>]
+    [<a href="/{{ .Board.Slug }}">{{ .Board.Name }}</a>]
+    [<a href="/{{ .Board.Slug }}/catalog">Catalog</a>]
+  </div>
+
+  <!-- Posts List -->
+  <div class="thread">
+    {{ range .Posts }}
+    <div class="post" id="post-{{ .ID }}">
+      <div class="post-info">
+        Anonymous <span class="post-date">{{ formatTime .CreatedAt }}</span>
+        <span class="post-num">No.{{ .ID }}</span>
+        [<a href="#post-{{ .ID }}">Link</a>]
+      </div>
+
+      {{ if .ImagePath }}
+      <div class="file-info">
+        <b>File:</b> {{ .ImagePath }}
+      </div>
+      <div>
+        <a href="/images/{{ .ImagePath }}" target="_blank">
+          <img src="/images/{{ .ImagePath }}" alt="Posted image" class="post-image">
+        </a>
+      </div>
+      {{ end }}
+
+      <div class="post-content">
+        {{ .Content }}
+      </div>
+      <div class="clear"></div>
+    </div>
+    {{ end }}
+  </div>
+
+  <hr class="hr">
+
+  <!-- Reply Form -->
+  <div class="form-box">
+    <form action="/new-post" method="post" enctype="multipart/form-data">
+      <input type="hidden" name="thread_id" value="{{ .Thread.ID }}">
+      <table>
+        <tr>
+          <td class="form-label">Name</td>
+          <td><input type="text" name="name" value="Anonymous" disabled></td>
+        </tr>
+        <tr>
+          <td class="form-label">Comment</td>
+          <td><textarea id="content" name="content" rows="4" cols="48" required></textarea></td>
+          <td><input type="submit" value="Post Reply" class="submit-btn"></td>
+        </tr>
+        <tr>
+          <td class="form-label">File</td>
+          <td colspan="2"><input type="file" id="image" name="image" accept="image/*"></td>
+        </tr>
+      </table>
+    </form>
+  </div>
+
+  <hr class="hr">
+
+  <div class="board-nav">
+    [<a href="/">Home</a>]
+    [<a href="/{{ .Board.Slug }}">{{ .Board.Name }}</a>]
+    [<a href="/{{ .Board.Slug }}/catalog">Catalog</a>]
+  </div>
+</div>
+{{ end }}

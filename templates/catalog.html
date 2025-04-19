@@ -1,0 +1,55 @@
+{{ define "content" }}
+<div>
+    <div class="board-header">
+        <h1 class="board-title">/{{ .Board.Slug }}/ - {{ .Board.Name }} (Catalog)</h1>
+        <div class="board-subtitle">{{ .Board.Description }}</div>
+    </div>
+
+    <div class="board-nav">
+        [<a href="/">Home</a>]
+        [<a href="/{{ .Board.Slug }}">Board View</a>]
+    </div>
+
+    <hr class="hr">
+
+    <!-- Thread Catalog -->
+    {{ if .CatalogItems }}
+    <div style="display: flex; flex-wrap: wrap; justify-content: flex-start;">
+        {{ range .CatalogItems }}
+        <div style="width: 150px; height: 250px; margin: 5px; overflow: hidden; background-color: #F0E0D6; border: 1px solid #D9BFB7; padding: 5px;">
+            <div style="text-align: center; margin-bottom: 5px;">
+                <b><a href="/{{ $.Board.Slug }}/thread/{{ .Thread.ID }}">{{ truncate .Thread.Title 20 }}</a></b>
+            </div>
+
+            {{ if .FirstPost.ImagePath }}
+            <div style="text-align: center; margin-bottom: 5px;">
+                <a href="/{{ $.Board.Slug }}/thread/{{ .Thread.ID }}">
+                    <img src="/images/{{ .FirstPost.ImagePath }}" alt="Thread image" style="max-width: 125px; max-height: 125px;">
+                </a>
+            </div>
+            {{ end }}
+
+            <div style="font-size: 8pt; height: 70px; overflow: hidden; margin-bottom: 5px;">
+                {{ truncate .FirstPost.Content 150 }}
+            </div>
+
+            <div style="font-size: 8pt; color: #666; text-align: right;">
+                <span>{{ .Thread.PostCount }} posts</span>
+            </div>
+        </div>
+        {{ end }}
+    </div>
+    {{ else }}
+    <div style="padding: 20px; text-align: center; background-color: #F0E0D6; border: 1px solid #D9BFB7;">
+        <span style="color: #666;">No threads yet. Be the first to create one!</span>
+    </div>
+    {{ end }}
+
+    <hr class="hr">
+
+    <div class="board-nav">
+        [<a href="/">Home</a>]
+        [<a href="/{{ .Board.Slug }}">Board View</a>]
+    </div>
+</div>
+{{ end }}

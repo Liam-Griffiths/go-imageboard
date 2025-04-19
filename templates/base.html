@@ -1,0 +1,203 @@
+{{ define "base" }}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ .Title }} - Imageboard</title>
+  <style>
+    /* 4chan-like styling */
+    body {
+      font-family: arial, helvetica, sans-serif;
+      font-size: 10pt;
+      background-color: #FFFFEE;
+      color: #800000;
+      margin: 0;
+      padding: 8px;
+    }
+
+    a {
+      color: #0000EE;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .board-header {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    .board-title {
+      font-weight: bold;
+      font-size: 24px;
+      color: #800000;
+    }
+
+    .board-subtitle {
+      font-size: 12px;
+      margin-top: 5px;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .thread {
+      background-color: #F0E0D6;
+      border: 1px solid #D9BFB7;
+      border-radius: 0;
+      margin-bottom: 20px;
+      padding: 5px;
+    }
+
+    .post {
+      background-color: #F0E0D6;
+      border-radius: 0;
+      padding: 5px;
+      margin-bottom: 5px;
+    }
+
+    .post-info {
+      color: #117743;
+      font-weight: bold;
+    }
+
+    .post-num {
+      color: #000;
+      font-weight: normal;
+    }
+
+    .post-content {
+      margin-top: 5px;
+    }
+
+    .form-box {
+      background-color: #EEAA88;
+      border: 1px solid #D9BFB7;
+      padding: 5px;
+      margin-bottom: 15px;
+    }
+
+    input, textarea {
+      font-family: arial, helvetica, sans-serif;
+      font-size: 10pt;
+      border: 1px solid #AAA;
+      padding: 2px;
+      margin-bottom: 5px;
+    }
+
+    .submit-btn {
+      background-color: #F0E0D6;
+      color: #800000;
+      font-weight: bold;
+      border: 1px solid #800000;
+      padding: 2px 5px;
+      cursor: pointer;
+    }
+
+    .submit-btn:hover {
+      background-color: #D9BFB7;
+    }
+
+    .greentext {
+      color: #789922;
+    }
+
+    .hr {
+      border-top: 1px solid #D9BFB7;
+      margin: 10px 0;
+    }
+
+    .board-nav {
+      margin: 5px 0;
+      text-align: center;
+    }
+
+    /* File upload styling */
+    .file-info {
+      font-size: 9pt;
+      color: #666;
+      margin-top: 5px;
+      margin-bottom: 5px;
+    }
+
+    .post-image {
+      margin: 5px 15px 5px 0;
+      float: left;
+      max-width: 125px;
+      max-height: 125px;
+    }
+
+    .post-image:hover {
+      cursor: pointer;
+    }
+
+    .form-label {
+      font-size: 10pt;
+      font-weight: bold;
+    }
+
+    .clear {
+      clear: both;
+    }
+
+    footer {
+      font-size: 9pt;
+      text-align: center;
+      color: #800000;
+      margin-top: 20px;
+      padding: 5px;
+      border-top: 1px solid #D9BFB7;
+    }
+  </style>
+</head>
+<body>
+<div class="board-header">
+  <div class="board-title">Imageboard</div>
+  <div class="board-subtitle">- A simple anonymous imageboard -</div>
+</div>
+
+<div class="board-nav">
+  [<a href="/">Home</a>]
+  <span style="margin-left: 20px; color: #FF0000;">[ADMIN:
+      <form method="post" action="/admin/wipe-redis" style="display: inline;">
+        <button type="submit"
+                onclick="return confirm('⚠️ WARNING: This will delete ALL DATA in Redis. Continue?');"
+                style="background: none; border: none; color: #FF0000; text-decoration: underline; cursor: pointer; font-family: inherit; font-size: inherit; padding: 0;">
+          Wipe Redis
+        </button>
+      </form>
+    ]</span>
+</div>
+
+<hr class="hr">
+
+<div class="container">
+  {{ template "content" . }}
+</div>
+
+<hr class="hr">
+
+<div class="board-nav">
+  [<a href="/">Home</a>]
+  <span style="margin-left: 20px; color: #FF0000;">[ADMIN:
+      <form method="post" action="/admin/wipe-redis" style="display: inline;">
+        <button type="submit"
+                onclick="return confirm('⚠️ WARNING: This will delete ALL DATA in Redis. Continue?');"
+                style="background: none; border: none; color: #FF0000; text-decoration: underline; cursor: pointer; font-family: inherit; font-size: inherit; padding: 0;">
+          Wipe Redis
+        </button>
+      </form>
+    ]</span>
+</div>
+
+<footer>
+  Simple Imageboard - Built with Go and Redis
+</footer>
+</body>
+</html>
+{{ end }}

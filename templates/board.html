@@ -1,0 +1,89 @@
+{{ define "content" }}
+<div>
+    <div class="board-header">
+        <h1 class="board-title">/{{ .Board.Slug }}/ - {{ .Board.Name }}</h1>
+        <div class="board-subtitle">{{ .Board.Description }}</div>
+    </div>
+
+    <div class="board-nav">
+        [<a href="/">Home</a>]
+        [<a href="/{{ .Board.Slug }}/catalog">Catalog</a>]
+    </div>
+
+    <hr class="hr">
+
+    <!-- New Thread Form -->
+    <div class="form-box">
+        <form action="/new-thread" method="post" enctype="multipart/form-data">
+            <input type="hidden" name="board_id" value="{{ .Board.ID }}">
+            <table>
+                <tr>
+                    <td class="form-label">Name</td>
+                    <td><input type="text" name="name" value="Anonymous" disabled></td>
+                </tr>
+                <tr>
+                    <td class="form-label">Subject</td>
+                    <td><input type="text" id="title" name="title" size="25" required></td>
+                    <td><input type="submit" value="New Thread" class="submit-btn"></td>
+                </tr>
+                <tr>
+                    <td class="form-label">Comment</td>
+                    <td colspan="2"><textarea id="content" name="content" rows="4" cols="48" required></textarea></td>
+                </tr>
+                <tr>
+                    <td class="form-label">File</td>
+                    <td colspan="2"><input type="file" id="image" name="image" accept="image/*"></td>
+                </tr>
+            </table>
+        </form>
+    </div>
+
+    <hr class="hr">
+
+    <!-- Thread Listing -->
+    {{ if .Threads }}
+    {{ range .Threads }}
+    <div class="thread">
+        <div class="post">
+            <div class="post-info">
+                Anonymous <span class="post-date">{{ formatTime .CreatedAt }}</span>
+                <span class="post-num">No.{{ .ID }}</span>
+                [<a href="/{{ $.Board.Slug }}/thread/{{ .ID }}">Reply</a>]
+            </div>
+
+            <div class="post-content">
+                <div class="file-info">
+                    <b>File:</b> (file would be displayed here)
+                </div>
+                <div>
+                    <a href="/{{ $.Board.Slug }}/thread/{{ .ID }}"><b>{{ .Title }}</b></a>
+                    <div>
+                        <span>(First post content would appear here)</span>
+                    </div>
+                </div>
+                <div class="clear"></div>
+            </div>
+
+            <div style="margin-top: 5px;">
+                <span style="color: #666;">{{ .PostCount }} posts</span> |
+                <span style="color: #666;">Last update: {{ formatTime .UpdatedAt }}</span>
+            </div>
+        </div>
+    </div>
+    {{ end }}
+    {{ else }}
+    <div class="thread">
+        <div class="post-content" style="text-align: center; padding: 20px;">
+            <span style="color: #666;">No threads yet. Be the first to create one!</span>
+        </div>
+    </div>
+    {{ end }}
+
+    <hr class="hr">
+
+    <div class="board-nav">
+        [<a href="/">Home</a>]
+        [<a href="/{{ .Board.Slug }}/catalog">Catalog</a>]
+    </div>
+</div>
+{{ end }}
