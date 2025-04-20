@@ -131,16 +131,68 @@ func BoardHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Define a structure to hold thread data with posts
+	type ThreadWithPosts struct {
+		Thread     Thread
+		FirstPost  Post
+		LatestPosts []Post
+	}
+
+	var threadsWithPosts []ThreadWithPosts
+	for _, thread := range threads {
+		// Get the first post
+		firstPost, err := GetThreadFirstPost(thread.ID)
+		if err != nil {
+			// If we can't get the first post, skip this thread
+			continue
+		}
+
+		// Get all posts for the thread
+		_, allPosts, err := GetThread(thread.ID)
+		if err != nil {
+			// If we can't get the posts, use just the first post
+			threadsWithPosts = append(threadsWithPosts, ThreadWithPosts{
+				Thread:     thread,
+				FirstPost:  firstPost,
+				LatestPosts: []Post{},
+			})
+			continue
+		}
+
+		// Get the latest 3 posts (excluding the first post)
+		var latestPosts []Post
+		if len(allPosts) > 1 {
+			// Start from the end and get up to 3 posts
+			start := len(allPosts) - 1
+			end := start - 2
+			if end < 1 {
+				end = 1 // Ensure we don't include the first post
+			}
+			for i := start; i >= end; i-- {
+				// Skip the first post
+				if allPosts[i].ID != firstPost.ID {
+					latestPosts = append(latestPosts, allPosts[i])
+				}
+			}
+		}
+
+		threadsWithPosts = append(threadsWithPosts, ThreadWithPosts{
+			Thread:     thread,
+			FirstPost:  firstPost,
+			LatestPosts: latestPosts,
+		})
+	}
+
 	// Check if user is admin
 	_, authErr := GetUserFromRequest(r)
 	isAdmin := authErr == nil // If no error, user is logged in as admin
 
 	// Render the board page
 	data := map[string]interface{}{
-		"Title":   board.Name,
-		"Board":   board,
-		"Threads": threads,
-		"IsAdmin": isAdmin,
+		"Title":           board.Name,
+		"Board":           board,
+		"ThreadsWithPosts": threadsWithPosts,
+		"IsAdmin":         isAdmin,
 	}
 
 	RenderTemplate(w, "board", data)

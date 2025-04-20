@@ -1,4 +1,44 @@
 {{ define "content" }}
+<style>
+  @media (max-width: 768px) {
+    body {
+      font-size: 14px;
+      padding: 5px;
+    }
+
+    .container {
+      max-width: 100%;
+      padding: 0;
+    }
+
+    .post {
+      padding: 8px;
+      margin-bottom: 8px;
+    }
+
+    .post-info {
+      font-size: 12px;
+      margin-bottom: 8px;
+    }
+
+    .post-content {
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    .post-image {
+      max-width: 100px;
+      max-height: 100px;
+      margin-right: 10px;
+    }
+
+    /* Improve touch targets */
+    .board-nav a, .post-info a {
+      padding: 5px;
+      display: inline-block;
+    }
+  }
+</style>
 <div>
   <!-- Thread Header -->
   <div style="margin-bottom: 5px;">
@@ -64,29 +104,32 @@
 
   <!-- Reply Form -->
   <div class="form-box">
-    <form action="/new-post" method="post" enctype="multipart/form-data">
+    <form action="/new-post" method="post" enctype="multipart/form-data" style="display: flex; flex-direction: column;">
       <input type="hidden" name="thread_id" value="{{ .Thread.ID }}">
-      <table>
-        <tr>
-          <td class="form-label">Name</td>
-          <td><input type="text" name="name" value="Anonymous" disabled></td>
-        </tr>
-        <tr>
-          <td class="form-label">Comment</td>
-          <td><textarea id="content" name="content" rows="4" cols="48" required></textarea></td>
-          <td><input type="submit" value="Post Reply" class="submit-btn"></td>
-        </tr>
-        <tr>
-          <td class="form-label">File</td>
-          <td colspan="2"><input type="file" id="image" name="image" accept="image/*"></td>
-        </tr>
-        <tr>
-          <td class="form-label">Verification</td>
-          <td colspan="2">
-            <div class="g-recaptcha" data-sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"></div>
-          </td>
-        </tr>
-      </table>
+
+      <div style="margin-bottom: 10px;">
+        <label class="form-label" style="display: block; margin-bottom: 5px;">Name</label>
+        <input type="text" name="name" value="Anonymous" disabled style="width: 100%; box-sizing: border-box;">
+      </div>
+
+      <div style="margin-bottom: 10px;">
+        <label class="form-label" style="display: block; margin-bottom: 5px;">Comment</label>
+        <textarea id="content" name="content" rows="4" required style="width: 100%; box-sizing: border-box;"></textarea>
+      </div>
+
+      <div style="margin-bottom: 10px;">
+        <label class="form-label" style="display: block; margin-bottom: 5px;">File</label>
+        <input type="file" id="image" name="image" accept="image/*" style="width: 100%;">
+      </div>
+
+      <div style="margin-bottom: 10px;">
+        <label class="form-label" style="display: block; margin-bottom: 5px;">Verification</label>
+        <div class="g-recaptcha" data-sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"></div>
+      </div>
+
+      <div style="margin-top: 10px;">
+        <input type="submit" value="Post Reply" class="submit-btn" style="padding: 8px 12px;">
+      </div>
     </form>
   </div>
 

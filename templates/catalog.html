@@ -13,23 +13,42 @@
     <hr class="hr">
 
     <!-- Thread Catalog -->
+    <style>
+        @media (max-width: 768px) {
+            .catalog-item {
+                width: calc(50% - 14px) !important;
+                height: auto !important;
+                min-height: 200px;
+            }
+            .catalog-title {
+                font-size: 14px;
+            }
+            .catalog-content {
+                font-size: 12px;
+            }
+            .catalog-image img {
+                max-width: 100px;
+                max-height: 100px;
+            }
+        }
+    </style>
     {{ if .CatalogItems }}
     <div style="display: flex; flex-wrap: wrap; justify-content: flex-start;">
         {{ range .CatalogItems }}
-        <div style="width: 150px; height: 250px; margin: 5px; overflow: hidden; background-color: #F0E0D6; border: 1px solid #D9BFB7; padding: 5px;">
-            <div style="text-align: center; margin-bottom: 5px;">
+        <div class="catalog-item" style="width: 150px; height: 250px; margin: 5px; overflow: hidden; background-color: #F0E0D6; border: 1px solid #D9BFB7; padding: 5px;">
+            <div class="catalog-title" style="text-align: center; margin-bottom: 5px;">
                 <b><a href="/{{ $.Board.Slug }}/thread/{{ .Thread.ID }}">{{ truncate .Thread.Title 20 }}</a></b>
             </div>
 
             {{ if .FirstPost.ImagePath }}
-            <div style="text-align: center; margin-bottom: 5px;">
+            <div class="catalog-image" style="text-align: center; margin-bottom: 5px;">
                 <a href="/{{ $.Board.Slug }}/thread/{{ .Thread.ID }}">
                     <img src="/images/{{ .FirstPost.ImagePath }}" alt="Thread image" style="max-width: 125px; max-height: 125px;">
                 </a>
             </div>
             {{ end }}
 
-            <div style="font-size: 8pt; height: 70px; overflow: hidden; margin-bottom: 5px;">
+            <div class="catalog-content" style="font-size: 8pt; height: 70px; overflow: hidden; margin-bottom: 5px;">
                 {{ truncate .FirstPost.Content 150 }}
             </div>
 
