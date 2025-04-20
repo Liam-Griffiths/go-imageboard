@@ -7,7 +7,31 @@ import (
 	"strings"
 )
 
+// createDefaultAdminUser creates a default admin user if none exists
+func createDefaultAdminUser() {
+	// Check if any admin users exist
+	var count int
+	err := db.QueryRow("SELECT COUNT(*) FROM admin_users").Scan(&count)
+	if err != nil {
+		log.Printf("Error checking admin users: %v", err)
+		return
+	}
+
+	// If no admin users exist, create a default one
+	if count == 0 {
+		_, err := CreateAdminUser("admin", "admin123")
+		if err != nil {
+			log.Printf("Error creating default admin user: %v", err)
+			return
+		}
+		log.Println("Created default admin user: admin / admin123")
+	}
+}
+
 func main() {
+	// Load environment variables from .env file
+	LoadEnv()
+
 	// Initialize PostgreSQL connection
 	err := InitDB()
 	if err != nil {
@@ -19,6 +43,9 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to connect to Redis: %v", err)
 	}
+
+	// Create default admin user
+	createDefaultAdminUser()
 
 	// Initialize templates
 	InitTemplates()
@@ -33,13 +60,22 @@ func main() {
 	// Set up image handler
 	http.HandleFunc("/images/", ImageHandler)
 
+	// Auth routes
+	http.HandleFunc("/login", LoginHandler)
+	http.HandleFunc("/logout", LogoutHandler)
+
 	// Admin routes
 	http.HandleFunc("/admin", AdminHomeHandler)
 	http.HandleFunc("/admin/boards", AdminBoardsHandler)
 	http.HandleFunc("/admin/create-board", AdminCreateBoardHandler)
 	http.HandleFunc("/admin/update-board", AdminUpdateBoardHandler)
 	http.HandleFunc("/admin/delete-board", AdminDeleteBoardHandler)
+	http.HandleFunc("/admin/delete-thread", AdminDeleteThreadHandler)
+	http.HandleFunc("/admin/delete-post", AdminDeletePostHandler)
 	http.HandleFunc("/admin/wipe-redis", WipeRedisHandler)
+
+	// Captcha route
+	http.HandleFunc("/captcha", CaptchaHandler)
 
 	// Post creation routes
 	http.HandleFunc("/new-thread", NewThreadHandler)

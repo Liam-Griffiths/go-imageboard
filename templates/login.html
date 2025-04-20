@@ -1,0 +1,40 @@
+{{ define "content" }}
+<div>
+  <div class="board-header">
+    <h1 class="board-title">Admin Login</h1>
+    <div class="board-subtitle">Please login to access the admin panel</div>
+  </div>
+
+  <hr class="hr">
+
+  <div class="form-box">
+    <form action="/login" method="post">
+      {{ if .Error }}
+      <div style="color: #FF0000; margin-bottom: 10px; text-align: center;">
+        {{ .Error }}
+      </div>
+      {{ end }}
+      <table style="width: 100%;">
+        <tr>
+          <td style="width: 100px;"><label for="username" class="form-label">Username</label></td>
+          <td><input type="text" id="username" name="username" required style="width: 200px;"></td>
+        </tr>
+        <tr>
+          <td><label for="password" class="form-label">Password</label></td>
+          <td><input type="password" id="password" name="password" required style="width: 200px;"></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td><input type="submit" value="Login" class="submit-btn"></td>
+        </tr>
+      </table>
+    </form>
+  </div>
+
+  <hr class="hr">
+
+  <div style="text-align: center; margin-top: 10px;">
+    <a href="/" style="color: #800000;">[Return to Homepage]</a>
+  </div>
+</div>
+{{ end }}

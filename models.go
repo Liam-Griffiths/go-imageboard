@@ -2,8 +2,13 @@ package main
 
 import (
 	"context"
+	"crypto/md5"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"log"
+	"net"
 	"net/http"
 	"os"
 	"strconv"
@@ -30,11 +35,13 @@ type Thread struct {
 
 // Post represents a post within a thread
 type Post struct {
-	ID        int       `json:"id"`
-	ThreadID  int       `json:"thread_id"`
-	Content   string    `json:"content"`
-	ImagePath string    `json:"image_path,omitempty"`
-	CreatedAt time.Time `json:"created_at"`
+	ID         int       `json:"id"`
+	ThreadID   int       `json:"thread_id"`
+	Content    string    `json:"content"`
+	ImagePath  string    `json:"image_path,omitempty"`
+	CreatedAt  time.Time `json:"created_at"`
+	UserID     string    `json:"user_id,omitempty"`
+	CountryCode string   `json:"country_code,omitempty"`
 }
 
 // InitRedis initializes the Redis connection
@@ -45,10 +52,26 @@ func InitRedis() error {
 		redisAddr = "localhost:6379"
 	}
 
+	// Get Redis password from environment variable or use default
+	redisPassword := os.Getenv("REDIS_PASSWORD")
+	// Default is empty password
+
+	// Get Redis DB number from environment variable or use default
+	redisDB := 0
+	redisDBStr := os.Getenv("REDIS_DB")
+	if redisDBStr != "" {
+		var err error
+		redisDB, err = strconv.Atoi(redisDBStr)
+		if err != nil {
+			log.Printf("Warning: Invalid REDIS_DB value '%s', using default DB 0", redisDBStr)
+			redisDB = 0
+		}
+	}
+
 	rdb = redis.NewClient(&redis.Options{
 		Addr:     redisAddr,
-		Password: "", // no password by default
-		DB:       0,  // use default DB
+		Password: redisPassword,
+		DB:       redisDB,
 	})
 
 	// Check connection
@@ -63,7 +86,7 @@ func GetNextID(key string) (int, error) {
 }
 
 // CreateThread creates a new thread and initial post
-func CreateThread(boardID int, title, content, imagePath string) (Thread, error) {
+func CreateThread(boardID int, title, content, imagePath, ipAddress string) (Thread, error) {
 	// Get next thread ID
 	threadID, err := GetNextID("global:nextThreadID")
 	if err != nil {
@@ -115,8 +138,8 @@ func CreateThread(boardID int, title, content, imagePath string) (Thread, error)
 		fmt.Printf("Error inserting thread reference into PostgreSQL: %v\n", err)
 	}
 
-	// Create initial post
-	_, err = CreatePost(threadID, content, imagePath)
+	// Create initial post with user ID and country code
+	_, err = CreatePost(threadID, content, imagePath, ipAddress)
 	if err != nil {
 		return Thread{}, err
 	}
@@ -132,7 +155,7 @@ func CreateThread(boardID int, title, content, imagePath string) (Thread, error)
 }
 
 // CreatePost adds a new post to an existing thread
-func CreatePost(threadID int, content string, imagePath string) (Post, error) {
+func CreatePost(threadID int, content string, imagePath string, ipAddress string) (Post, error) {
 	// Check if thread exists
 	threadKey := fmt.Sprintf("thread:%d", threadID)
 	exists, err := rdb.Exists(ctx, threadKey).Result()
@@ -149,13 +172,19 @@ func CreatePost(threadID int, content string, imagePath string) (Post, error) {
 		return Post{}, err
 	}
 
+	// Generate user ID and get country code
+	userID := GenerateUserID(ipAddress, threadID)
+	countryCode := GetCountryCode(ipAddress)
+
 	now := time.Now()
 	post := Post{
-		ID:        postID,
-		ThreadID:  threadID,
-		Content:   content,
-		ImagePath: imagePath,
-		CreatedAt: now,
+		ID:          postID,
+		ThreadID:    threadID,
+		Content:     content,
+		ImagePath:   imagePath,
+		CreatedAt:   now,
+		UserID:      userID,
+		CountryCode: countryCode,
 	}
 
 	// Save post data
@@ -402,4 +431,187 @@ func GetThreadFirstPost(threadID int) (Post, error) {
 
 	err = json.Unmarshal([]byte(postData), &post)
 	return post, err
+}
+
+// GenerateUserID creates a deterministic ID for a user within a thread
+// based on their IP address and the thread ID
+func GenerateUserID(ip string, threadID int) string {
+	// Create a unique string by combining IP and thread ID
+	data := fmt.Sprintf("%s:%d", ip, threadID)
+
+	// Hash the data using MD5
+	hasher := md5.New()
+	hasher.Write([]byte(data))
+	hashBytes := hasher.Sum(nil)
+
+	// Convert to hex string and take first 8 characters
+	hashString := hex.EncodeToString(hashBytes)
+	return hashString[:8]
+}
+
+// GetCountryCode returns the country code for an IP address
+func GetCountryCode(ip string) string {
+	// Skip for localhost or private IPs
+	parsedIP := net.ParseIP(ip)
+	if parsedIP == nil || parsedIP.IsLoopback() || parsedIP.IsPrivate() {
+		return "XX" // Unknown or local
+	}
+
+	// Use a free IP geolocation API
+	resp, err := http.Get("https://ipapi.co/" + ip + "/country/")
+	if err != nil {
+		return "XX" // Error fetching country
+	}
+	defer resp.Body.Close()
+
+	// Read the response
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "XX" // Error reading response
+	}
+
+	countryCode := strings.TrimSpace(string(body))
+
+	// Validate country code (should be 2 uppercase letters)
+	if len(countryCode) != 2 || !isAlpha(countryCode) {
+		return "XX" // Invalid country code
+	}
+
+	return countryCode
+}
+
+// DeleteThread deletes a thread and all its posts
+func DeleteThread(threadID int) error {
+	// Get thread data
+	threadKey := fmt.Sprintf("thread:%d", threadID)
+	threadData, err := rdb.Get(ctx, threadKey).Result()
+	if err != nil {
+		return err
+	}
+
+	var thread Thread
+	err = json.Unmarshal([]byte(threadData), &thread)
+	if err != nil {
+		return err
+	}
+
+	// Get post IDs for this thread
+	postsKey := fmt.Sprintf("thread:%d:posts", threadID)
+	postIDs, err := rdb.LRange(ctx, postsKey, 0, -1).Result()
+	if err != nil {
+		return err
+	}
+
+	// Delete each post
+	for _, postIDStr := range postIDs {
+		postID, _ := strconv.Atoi(postIDStr)
+		postKey := fmt.Sprintf("post:%d", postID)
+		err = rdb.Del(ctx, postKey).Err()
+		if err != nil {
+			// Log error but continue
+			fmt.Printf("Error deleting post %d: %v\n", postID, err)
+		}
+	}
+
+	// Delete thread's posts list
+	err = rdb.Del(ctx, postsKey).Err()
+	if err != nil {
+		return err
+	}
+
+	// Delete thread from board's thread index
+	boardThreadsKey := fmt.Sprintf("board:%d:threads", thread.BoardID)
+	err = rdb.ZRem(ctx, boardThreadsKey, threadID).Err()
+	if err != nil {
+		return err
+	}
+
+	// Delete thread from global thread index
+	err = rdb.ZRem(ctx, "threads:by_time", threadID).Err()
+	if err != nil {
+		return err
+	}
+
+	// Delete thread data
+	err = rdb.Del(ctx, threadKey).Err()
+	if err != nil {
+		return err
+	}
+
+	// Delete thread from PostgreSQL
+	_, err = db.Exec("DELETE FROM threads WHERE id = $1", threadID)
+	if err != nil {
+		// Log error but don't fail the thread deletion
+		fmt.Printf("Error deleting thread from PostgreSQL: %v\n", err)
+	}
+
+	// Decrement board thread count in PostgreSQL
+	_, err = db.Exec("UPDATE boards SET thread_count = thread_count - 1, updated_at = NOW() WHERE id = $1", thread.BoardID)
+	if err != nil {
+		// Log error but don't fail the thread deletion
+		fmt.Printf("Error decrementing board thread count: %v\n", err)
+	}
+
+	return nil
+}
+
+// DeletePost deletes a post from a thread
+func DeletePost(postID int) error {
+	// Get post data
+	postKey := fmt.Sprintf("post:%d", postID)
+	postData, err := rdb.Get(ctx, postKey).Result()
+	if err != nil {
+		return err
+	}
+
+	var post Post
+	err = json.Unmarshal([]byte(postData), &post)
+	if err != nil {
+		return err
+	}
+
+	// Remove post from thread's posts list
+	postsKey := fmt.Sprintf("thread:%d:posts", post.ThreadID)
+	err = rdb.LRem(ctx, postsKey, 0, postID).Err()
+	if err != nil {
+		return err
+	}
+
+	// Update thread's post count
+	threadKey := fmt.Sprintf("thread:%d", post.ThreadID)
+	threadData, err := rdb.Get(ctx, threadKey).Result()
+	if err != nil {
+		return err
+	}
+
+	var thread Thread
+	err = json.Unmarshal([]byte(threadData), &thread)
+	if err != nil {
+		return err
+	}
+
+	thread.PostCount--
+	threadJSON, _ := json.Marshal(thread)
+	err = rdb.Set(ctx, threadKey, threadJSON, 0).Err()
+	if err != nil {
+		return err
+	}
+
+	// Delete post data
+	err = rdb.Del(ctx, postKey).Err()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// isAlpha checks if a string contains only alphabetic characters
+func isAlpha(s string) bool {
+	for _, r := range s {
+		if (r < 'A' || r > 'Z') && (r < 'a' || r > 'z') {
+			return false
+		}
+	}
+	return true
 }

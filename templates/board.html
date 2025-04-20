@@ -34,9 +34,17 @@
                     <td class="form-label">File</td>
                     <td colspan="2"><input type="file" id="image" name="image" accept="image/*"></td>
                 </tr>
+                <tr>
+                    <td class="form-label">Verification</td>
+                    <td colspan="2">
+                        <div class="g-recaptcha" data-sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"></div>
+                    </td>
+                </tr>
             </table>
         </form>
     </div>
+
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 
     <hr class="hr">
 
@@ -67,6 +75,12 @@
             <div style="margin-top: 5px;">
                 <span style="color: #666;">{{ .PostCount }} posts</span> |
                 <span style="color: #666;">Last update: {{ formatTime .UpdatedAt }}</span>
+                {{ if $.IsAdmin }}
+                <form action="/admin/delete-thread" method="post" style="display: inline; margin-left: 10px;" onsubmit="return confirm('Are you sure you want to delete this thread?');">
+                  <input type="hidden" name="thread_id" value="{{ .ID }}">
+                  <button type="submit" class="delete-btn" style="color: red; background: none; border: none; cursor: pointer; font-size: 12px;">Delete Thread</button>
+                </form>
+                {{ end }}
             </div>
         </div>
     </div>

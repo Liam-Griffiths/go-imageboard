@@ -163,15 +163,10 @@
 
 <div class="board-nav">
   [<a href="/">Home</a>]
-  <span style="margin-left: 20px; color: #FF0000;">[ADMIN:
-      <form method="post" action="/admin/wipe-redis" style="display: inline;">
-        <button type="submit"
-                onclick="return confirm('⚠️ WARNING: This will delete ALL DATA in Redis. Continue?');"
-                style="background: none; border: none; color: #FF0000; text-decoration: underline; cursor: pointer; font-family: inherit; font-size: inherit; padding: 0;">
-          Wipe Redis
-        </button>
-      </form>
-    ]</span>
+  {{ if .User }}
+  [<a href="/admin">Admin</a>]
+  [<a href="/logout">Logout</a>]
+  {{ end }}
 </div>
 
 <hr class="hr">
@@ -184,19 +179,14 @@
 
 <div class="board-nav">
   [<a href="/">Home</a>]
-  <span style="margin-left: 20px; color: #FF0000;">[ADMIN:
-      <form method="post" action="/admin/wipe-redis" style="display: inline;">
-        <button type="submit"
-                onclick="return confirm('⚠️ WARNING: This will delete ALL DATA in Redis. Continue?');"
-                style="background: none; border: none; color: #FF0000; text-decoration: underline; cursor: pointer; font-family: inherit; font-size: inherit; padding: 0;">
-          Wipe Redis
-        </button>
-      </form>
-    ]</span>
+  {{ if .User }}
+  [<a href="/admin">Admin</a>]
+  [<a href="/logout">Logout</a>]
+  {{ end }}
 </div>
 
 <footer>
-  Simple Imageboard - Built with Go and Redis
+  go-imageboard
 </footer>
 </body>
 </html>

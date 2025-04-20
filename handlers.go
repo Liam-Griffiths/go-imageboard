@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"html/template"
 	"log"
+	"net"
 	"net/http"
 	"strconv"
 	"strings"
@@ -58,6 +59,11 @@ func InitTemplates() {
 	templates["admin_boards"] = template.Must(template.New("base").Funcs(funcMap).ParseFiles(
 		"templates/base.html",
 		"templates/admin_boards.html",
+	))
+
+	templates["login"] = template.Must(template.New("base").Funcs(funcMap).ParseFiles(
+		"templates/base.html",
+		"templates/login.html",
 	))
 }
 
@@ -125,11 +131,16 @@ func BoardHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Check if user is admin
+	_, authErr := GetUserFromRequest(r)
+	isAdmin := authErr == nil // If no error, user is logged in as admin
+
 	// Render the board page
 	data := map[string]interface{}{
 		"Title":   board.Name,
 		"Board":   board,
 		"Threads": threads,
+		"IsAdmin": isAdmin,
 	}
 
 	RenderTemplate(w, "board", data)
@@ -178,10 +189,15 @@ func CatalogHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Render the catalog page
+	// Check if user is admin
+	_, authErr := GetUserFromRequest(r)
+	isAdmin := authErr == nil // If no error, user is logged in as admin
+
 	data := map[string]interface{}{
 		"Title":        board.Name + " - Catalog",
 		"Board":        board,
 		"CatalogItems": catalogItems,
+		"IsAdmin":      isAdmin,
 	}
 
 	RenderTemplate(w, "catalog", data)
@@ -257,12 +273,17 @@ func ThreadHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Check if user is admin
+	_, authErr := GetUserFromRequest(r)
+	isAdmin := authErr == nil // If no error, user is logged in as admin
+
 	// Render thread page
 	data := map[string]interface{}{
-		"Title":  thread.Title,
-		"Board":  board,
-		"Thread": thread,
-		"Posts":  posts,
+		"Title":   thread.Title,
+		"Board":   board,
+		"Thread":  thread,
+		"Posts":   posts,
+		"IsAdmin": isAdmin,
 	}
 
 	RenderTemplate(w, "thread", data)
@@ -286,6 +307,7 @@ func NewThreadHandler(w http.ResponseWriter, r *http.Request) {
 	boardIDStr := r.FormValue("board_id")
 	title := r.FormValue("title")
 	content := r.FormValue("content")
+	recaptchaResponse := r.FormValue("g-recaptcha-response")
 
 	boardID, err := strconv.Atoi(boardIDStr)
 	if err != nil {
@@ -296,6 +318,23 @@ func NewThreadHandler(w http.ResponseWriter, r *http.Request) {
 	// Simple validation
 	if title == "" || content == "" {
 		http.Error(w, "Title and content are required", http.StatusBadRequest)
+		return
+	}
+
+	// Verify reCAPTCHA
+	if recaptchaResponse == "" {
+		http.Error(w, "reCAPTCHA verification failed", http.StatusBadRequest)
+		return
+	}
+
+	valid, err := VerifyCaptcha(recaptchaResponse)
+	if err != nil {
+		http.Error(w, "Error verifying reCAPTCHA", http.StatusInternalServerError)
+		return
+	}
+
+	if !valid {
+		http.Error(w, "Invalid reCAPTCHA", http.StatusBadRequest)
 		return
 	}
 
@@ -324,8 +363,11 @@ func NewThreadHandler(w http.ResponseWriter, r *http.Request) {
 		imagePath = filename
 	}
 
+	// Get user's IP address
+	ipAddress := getIPAddress(r)
+
 	// Create the thread
-	thread, err := CreateThread(boardID, title, content, imagePath)
+	thread, err := CreateThread(boardID, title, content, imagePath, ipAddress)
 	if err != nil {
 		http.Error(w, "Error creating thread", http.StatusInternalServerError)
 		return
@@ -340,6 +382,26 @@ func NewThreadHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Redirect to the new thread
 	http.Redirect(w, r, "/"+board.Slug+"/thread/"+strconv.Itoa(thread.ID), http.StatusSeeOther)
+}
+
+// getIPAddress extracts the client's IP address from the request
+func getIPAddress(r *http.Request) string {
+	// Check for X-Forwarded-For header first (for clients behind proxies)
+	ip := r.Header.Get("X-Forwarded-For")
+	if ip != "" {
+		// X-Forwarded-For can contain multiple IPs, take the first one
+		ips := strings.Split(ip, ",")
+		return strings.TrimSpace(ips[0])
+	}
+
+	// If no X-Forwarded-For, use RemoteAddr
+	ip, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		// If there's an error, just return the RemoteAddr as is
+		return r.RemoteAddr
+	}
+
+	return ip
 }
 
 // NewPostHandler handles creating a new post in a thread
@@ -359,6 +421,7 @@ func NewPostHandler(w http.ResponseWriter, r *http.Request) {
 	// Get thread ID and content
 	threadIDStr := r.FormValue("thread_id")
 	content := r.FormValue("content")
+	recaptchaResponse := r.FormValue("g-recaptcha-response")
 
 	threadID, err := strconv.Atoi(threadIDStr)
 	if err != nil {
@@ -369,6 +432,23 @@ func NewPostHandler(w http.ResponseWriter, r *http.Request) {
 	// Simple validation
 	if content == "" {
 		http.Error(w, "Content is required", http.StatusBadRequest)
+		return
+	}
+
+	// Verify reCAPTCHA
+	if recaptchaResponse == "" {
+		http.Error(w, "reCAPTCHA verification failed", http.StatusBadRequest)
+		return
+	}
+
+	valid, err := VerifyCaptcha(recaptchaResponse)
+	if err != nil {
+		http.Error(w, "Error verifying reCAPTCHA", http.StatusInternalServerError)
+		return
+	}
+
+	if !valid {
+		http.Error(w, "Invalid reCAPTCHA", http.StatusBadRequest)
 		return
 	}
 
@@ -397,8 +477,11 @@ func NewPostHandler(w http.ResponseWriter, r *http.Request) {
 		imagePath = filename
 	}
 
+	// Get user's IP address
+	ipAddress := getIPAddress(r)
+
 	// Create the post
-	_, err = CreatePost(threadID, content, imagePath)
+	_, err = CreatePost(threadID, content, imagePath, ipAddress)
 	if err != nil {
 		http.Error(w, "Error creating post", http.StatusInternalServerError)
 		return
@@ -424,13 +507,21 @@ func NewPostHandler(w http.ResponseWriter, r *http.Request) {
 
 // WipeRedisHandler clears all data from Redis
 func WipeRedisHandler(w http.ResponseWriter, r *http.Request) {
+	// Get user from request
+	_, err := GetUserFromRequest(r)
+	if err != nil {
+		// User is not logged in, redirect to login page
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
 	// Flush all data from Redis
-	err := rdb.FlushAll(ctx).Err()
+	err = rdb.FlushAll(ctx).Err()
 	if err != nil {
 		http.Error(w, "Failed to wipe Redis: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -449,11 +540,86 @@ func WipeRedisHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
+// Auth handlers
+// LoginHandler handles user login
+func LoginHandler(w http.ResponseWriter, r *http.Request) {
+	// If already logged in, redirect to admin page
+	_, err := GetUserFromRequest(r)
+	if err == nil {
+		// User is already logged in
+		http.Redirect(w, r, "/admin", http.StatusSeeOther)
+		return
+	}
+
+	// Handle form submission
+	if r.Method == http.MethodPost {
+		username := r.FormValue("username")
+		password := r.FormValue("password")
+
+		// Authenticate user
+		user, err := AuthenticateUser(username, password)
+		if err != nil {
+			// Authentication failed
+			data := map[string]interface{}{
+				"Title": "Admin Login",
+				"Error": "Invalid username or password",
+			}
+			RenderTemplate(w, "login", data)
+			return
+		}
+
+		// Create session
+		session, err := CreateSession(user.ID, user.Username)
+		if err != nil {
+			http.Error(w, "Error creating session", http.StatusInternalServerError)
+			return
+		}
+
+		// Set session cookie
+		SetSessionCookie(w, session)
+
+		// Redirect to admin page
+		http.Redirect(w, r, "/admin", http.StatusSeeOther)
+		return
+	}
+
+	// Display login form
+	data := map[string]interface{}{
+		"Title": "Admin Login",
+	}
+	RenderTemplate(w, "login", data)
+}
+
+// LogoutHandler handles user logout
+func LogoutHandler(w http.ResponseWriter, r *http.Request) {
+	// Get session cookie
+	cookie, err := r.Cookie("session")
+	if err == nil {
+		// Delete session
+		DeleteSession(cookie.Value)
+	}
+
+	// Clear session cookie
+	ClearSessionCookie(w)
+
+	// Redirect to home page
+	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
 // Admin handlers
 // AdminHomeHandler displays the admin dashboard
 func AdminHomeHandler(w http.ResponseWriter, r *http.Request) {
+	// Get user from request
+	user, err := GetUserFromRequest(r)
+	if err != nil {
+		// User is not logged in, redirect to login page
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+
 	data := map[string]interface{}{
 		"Title": "Admin Dashboard",
+		"User":  user,
 	}
 
 	RenderTemplate(w, "admin", data)
@@ -461,6 +627,14 @@ func AdminHomeHandler(w http.ResponseWriter, r *http.Request) {
 
 // AdminBoardsHandler displays the board management page
 func AdminBoardsHandler(w http.ResponseWriter, r *http.Request) {
+	// Get user from request
+	user, err := GetUserFromRequest(r)
+	if err != nil {
+		// User is not logged in, redirect to login page
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+
 	// Get all boards
 	boards, err := GetAllBoards()
 	if err != nil {
@@ -471,6 +645,7 @@ func AdminBoardsHandler(w http.ResponseWriter, r *http.Request) {
 	data := map[string]interface{}{
 		"Title":  "Board Management",
 		"Boards": boards,
+		"User":   user,
 	}
 
 	RenderTemplate(w, "admin_boards", data)
@@ -478,13 +653,21 @@ func AdminBoardsHandler(w http.ResponseWriter, r *http.Request) {
 
 // AdminCreateBoardHandler creates a new board
 func AdminCreateBoardHandler(w http.ResponseWriter, r *http.Request) {
+	// Get user from request
+	_, err := GetUserFromRequest(r)
+	if err != nil {
+		// User is not logged in, redirect to login page
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
 	// Parse form
-	err := r.ParseForm()
+	err = r.ParseForm()
 	if err != nil {
 		http.Error(w, "Error parsing form", http.StatusBadRequest)
 		return
@@ -513,13 +696,21 @@ func AdminCreateBoardHandler(w http.ResponseWriter, r *http.Request) {
 
 // AdminUpdateBoardHandler updates an existing board
 func AdminUpdateBoardHandler(w http.ResponseWriter, r *http.Request) {
+	// Get user from request
+	_, err := GetUserFromRequest(r)
+	if err != nil {
+		// User is not logged in, redirect to login page
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
 	// Parse form
-	err := r.ParseForm()
+	err = r.ParseForm()
 	if err != nil {
 		http.Error(w, "Error parsing form", http.StatusBadRequest)
 		return
@@ -548,13 +739,21 @@ func AdminUpdateBoardHandler(w http.ResponseWriter, r *http.Request) {
 
 // AdminDeleteBoardHandler deletes a board
 func AdminDeleteBoardHandler(w http.ResponseWriter, r *http.Request) {
+	// Get user from request
+	_, err := GetUserFromRequest(r)
+	if err != nil {
+		// User is not logged in, redirect to login page
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
 	// Parse form
-	err := r.ParseForm()
+	err = r.ParseForm()
 	if err != nil {
 		http.Error(w, "Error parsing form", http.StatusBadRequest)
 		return
@@ -576,4 +775,120 @@ func AdminDeleteBoardHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Redirect back to board management
 	http.Redirect(w, r, "/admin/boards", http.StatusSeeOther)
+}
+
+// AdminDeleteThreadHandler deletes a thread and all its posts
+func AdminDeleteThreadHandler(w http.ResponseWriter, r *http.Request) {
+	// Get user from request
+	_, err := GetUserFromRequest(r)
+	if err != nil {
+		// User is not logged in, redirect to login page
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Parse form
+	err = r.ParseForm()
+	if err != nil {
+		http.Error(w, "Error parsing form", http.StatusBadRequest)
+		return
+	}
+
+	threadIDStr := r.FormValue("thread_id")
+	threadID, err := strconv.Atoi(threadIDStr)
+	if err != nil {
+		http.Error(w, "Invalid thread ID", http.StatusBadRequest)
+		return
+	}
+
+	// Get the thread to determine which board to redirect to
+	thread, _, err := GetThread(threadID)
+	if err != nil {
+		http.Error(w, "Error getting thread: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Get board slug for redirect
+	board, err := GetBoardByID(thread.BoardID)
+	if err != nil {
+		http.Error(w, "Error getting board: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Delete the thread
+	err = DeleteThread(threadID)
+	if err != nil {
+		http.Error(w, "Error deleting thread: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Redirect back to the board
+	http.Redirect(w, r, "/"+board.Slug, http.StatusSeeOther)
+}
+
+// AdminDeletePostHandler deletes a post from a thread
+func AdminDeletePostHandler(w http.ResponseWriter, r *http.Request) {
+	// Get user from request
+	_, err := GetUserFromRequest(r)
+	if err != nil {
+		// User is not logged in, redirect to login page
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Parse form
+	err = r.ParseForm()
+	if err != nil {
+		http.Error(w, "Error parsing form", http.StatusBadRequest)
+		return
+	}
+
+	postIDStr := r.FormValue("post_id")
+	threadIDStr := r.FormValue("thread_id")
+
+	postID, err := strconv.Atoi(postIDStr)
+	if err != nil {
+		http.Error(w, "Invalid post ID", http.StatusBadRequest)
+		return
+	}
+
+	threadID, err := strconv.Atoi(threadIDStr)
+	if err != nil {
+		http.Error(w, "Invalid thread ID", http.StatusBadRequest)
+		return
+	}
+
+	// Get the thread to determine which board to redirect to
+	thread, _, err := GetThread(threadID)
+	if err != nil {
+		http.Error(w, "Error getting thread: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Get board slug for redirect
+	board, err := GetBoardByID(thread.BoardID)
+	if err != nil {
+		http.Error(w, "Error getting board: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Delete the post
+	err = DeletePost(postID)
+	if err != nil {
+		http.Error(w, "Error deleting post: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Redirect back to the thread
+	http.Redirect(w, r, "/"+board.Slug+"/thread/"+threadIDStr, http.StatusSeeOther)
 }

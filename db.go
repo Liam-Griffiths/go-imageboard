@@ -74,7 +74,44 @@ func InitDB() error {
 		return err
 	}
 
+	// Run database migrations
+	err = migrateDatabase()
+	if err != nil {
+		return err
+	}
+
 	log.Println("Connected to PostgreSQL database successfully")
+	return nil
+}
+
+// migrateDatabase performs any necessary database migrations
+func migrateDatabase() error {
+	// Check if thread_count column exists in boards table
+	var exists bool
+	err := db.QueryRow(`
+		SELECT EXISTS (
+			SELECT 1 
+			FROM information_schema.columns 
+			WHERE table_name = 'boards' AND column_name = 'thread_count'
+		)
+	`).Scan(&exists)
+
+	if err != nil {
+		return err
+	}
+
+	// If thread_count column doesn't exist, add it
+	if !exists {
+		_, err = db.Exec(`
+			ALTER TABLE boards 
+			ADD COLUMN thread_count INTEGER NOT NULL DEFAULT 0
+		`)
+		if err != nil {
+			return err
+		}
+		log.Println("Added thread_count column to boards table")
+	}
+
 	return nil
 }
 
@@ -88,7 +125,8 @@ func createTables() error {
 			name VARCHAR(100) NOT NULL,
 			description TEXT,
 			created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-			updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+			updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+			thread_count INTEGER NOT NULL DEFAULT 0
 		)
 	`)
 
@@ -125,7 +163,7 @@ func createTables() error {
 // GetAllBoards returns all boards
 func GetAllBoards() ([]Board, error) {
 	rows, err := db.Query(`
-		SELECT id, slug, name, description, created_at, updated_at 
+		SELECT id, slug, name, description, created_at, updated_at, thread_count
 		FROM boards 
 		ORDER BY name
 	`)
@@ -137,16 +175,9 @@ func GetAllBoards() ([]Board, error) {
 	var boards []Board
 	for rows.Next() {
 		var b Board
-		err := rows.Scan(&b.ID, &b.Slug, &b.Name, &b.Description, &b.CreatedAt, &b.UpdatedAt)
+		err := rows.Scan(&b.ID, &b.Slug, &b.Name, &b.Description, &b.CreatedAt, &b.UpdatedAt, &b.ThreadCount)
 		if err != nil {
 			return nil, err
-		}
-
-		// Get thread count for each board
-		err = db.QueryRow("SELECT COUNT(*) FROM threads WHERE board_id = $1", b.ID).Scan(&b.ThreadCount)
-		if err != nil {
-			// If this fails, just set thread count to 0
-			b.ThreadCount = 0
 		}
 
 		boards = append(boards, b)
@@ -163,19 +194,13 @@ func GetAllBoards() ([]Board, error) {
 func GetBoardBySlug(slug string) (Board, error) {
 	var b Board
 	err := db.QueryRow(`
-		SELECT id, slug, name, description, created_at, updated_at 
+		SELECT id, slug, name, description, created_at, updated_at, thread_count
 		FROM boards 
 		WHERE slug = $1
-	`, slug).Scan(&b.ID, &b.Slug, &b.Name, &b.Description, &b.CreatedAt, &b.UpdatedAt)
+	`, slug).Scan(&b.ID, &b.Slug, &b.Name, &b.Description, &b.CreatedAt, &b.UpdatedAt, &b.ThreadCount)
 
 	if err != nil {
 		return Board{}, err
-	}
-
-	// Get thread count
-	err = db.QueryRow("SELECT COUNT(*) FROM threads WHERE board_id = $1", b.ID).Scan(&b.ThreadCount)
-	if err != nil {
-		b.ThreadCount = 0
 	}
 
 	return b, nil
@@ -185,19 +210,13 @@ func GetBoardBySlug(slug string) (Board, error) {
 func GetBoardByID(id int) (Board, error) {
 	var b Board
 	err := db.QueryRow(`
-		SELECT id, slug, name, description, created_at, updated_at 
+		SELECT id, slug, name, description, created_at, updated_at, thread_count
 		FROM boards 
 		WHERE id = $1
-	`, id).Scan(&b.ID, &b.Slug, &b.Name, &b.Description, &b.CreatedAt, &b.UpdatedAt)
+	`, id).Scan(&b.ID, &b.Slug, &b.Name, &b.Description, &b.CreatedAt, &b.UpdatedAt, &b.ThreadCount)
 
 	if err != nil {
 		return Board{}, err
-	}
-
-	// Get thread count
-	err = db.QueryRow("SELECT COUNT(*) FROM threads WHERE board_id = $1", b.ID).Scan(&b.ThreadCount)
-	if err != nil {
-		b.ThreadCount = 0
 	}
 
 	return b, nil
@@ -207,10 +226,10 @@ func GetBoardByID(id int) (Board, error) {
 func CreateBoard(slug, name, description string) (Board, error) {
 	var b Board
 	err := db.QueryRow(`
-		INSERT INTO boards (slug, name, description, created_at, updated_at)
-		VALUES ($1, $2, $3, NOW(), NOW())
-		RETURNING id, slug, name, description, created_at, updated_at
-	`, slug, name, description).Scan(&b.ID, &b.Slug, &b.Name, &b.Description, &b.CreatedAt, &b.UpdatedAt)
+		INSERT INTO boards (slug, name, description, created_at, updated_at, thread_count)
+		VALUES ($1, $2, $3, NOW(), NOW(), 0)
+		RETURNING id, slug, name, description, created_at, updated_at, thread_count
+	`, slug, name, description).Scan(&b.ID, &b.Slug, &b.Name, &b.Description, &b.CreatedAt, &b.UpdatedAt, &b.ThreadCount)
 
 	return b, err
 }

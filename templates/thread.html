@@ -9,6 +9,12 @@
     [<a href="/">Home</a>]
     [<a href="/{{ .Board.Slug }}">{{ .Board.Name }}</a>]
     [<a href="/{{ .Board.Slug }}/catalog">Catalog</a>]
+    {{ if .IsAdmin }}
+    <form action="/admin/delete-thread" method="post" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this thread?');">
+      <input type="hidden" name="thread_id" value="{{ .Thread.ID }}">
+      <button type="submit" class="delete-btn" style="color: red; background: none; border: none; cursor: pointer; font-size: 12px;">Delete Thread</button>
+    </form>
+    {{ end }}
   </div>
 
   <!-- Posts List -->
@@ -16,9 +22,23 @@
     {{ range .Posts }}
     <div class="post" id="post-{{ .ID }}">
       <div class="post-info">
-        Anonymous <span class="post-date">{{ formatTime .CreatedAt }}</span>
+        Anonymous 
+        {{ if .UserID }}
+        <span class="user-id" style="color: #117743; font-weight: bold;">(ID: {{ .UserID }})</span>
+        {{ end }}
+        {{ if .CountryCode }}
+        <span class="country-code">({{ .CountryCode }})</span>
+        {{ end }}
+        <span class="post-date">{{ formatTime .CreatedAt }}</span>
         <span class="post-num">No.{{ .ID }}</span>
         [<a href="#post-{{ .ID }}">Link</a>]
+        {{ if $.IsAdmin }}
+        <form action="/admin/delete-post" method="post" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this post?');">
+          <input type="hidden" name="post_id" value="{{ .ID }}">
+          <input type="hidden" name="thread_id" value="{{ .ThreadID }}">
+          <button type="submit" class="delete-btn" style="color: red; background: none; border: none; cursor: pointer; font-size: 12px;">Delete</button>
+        </form>
+        {{ end }}
       </div>
 
       {{ if .ImagePath }}
@@ -60,9 +80,17 @@
           <td class="form-label">File</td>
           <td colspan="2"><input type="file" id="image" name="image" accept="image/*"></td>
         </tr>
+        <tr>
+          <td class="form-label">Verification</td>
+          <td colspan="2">
+            <div class="g-recaptcha" data-sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"></div>
+          </td>
+        </tr>
       </table>
     </form>
   </div>
+
+  <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 
   <hr class="hr">
 
