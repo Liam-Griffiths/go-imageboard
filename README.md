@@ -2,6 +2,20 @@
 
 A simple imageboard application written in Go, using PostgreSQL for persistent storage and Redis for caching.
 
+## WIP - Todo
+
+- Horizontal Scaling
+- Rate limiting
+- Image upload optimisation
+- User bans
+- Email
+- Advertising
+- Crypto Integration?
+- Plugin Framework
+- API Access
+- General Refactoring
+- Etc
+
 ## Features
 
 - Multiple boards
@@ -9,6 +23,10 @@ A simple imageboard application written in Go, using PostgreSQL for persistent s
 - Image uploads
 - Admin panel for moderation
 - Google reCAPTCHA integration
+
+## Contributing & Code of Conduct
+
+Create an Issue and create a PR. Rules: Be excellent to eachother.
 
 ## Configuration
 
