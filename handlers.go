@@ -109,13 +109,13 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 // BoardHandler handles displaying a board's threads
 func BoardHandler(w http.ResponseWriter, r *http.Request) {
 	// Get board slug from the URL
-	parts := strings.Split(r.URL.Path, "/")
-	if len(parts) < 2 || parts[1] == "" {
+	parts := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
+	if len(parts) < 1 || parts[0] == "" {
 		http.NotFound(w, r)
 		return
 	}
 
-	slug := parts[1]
+	slug := parts[0]
 
 	// Get board data
 	board, err := GetBoardBySlug(slug)
@@ -201,13 +201,13 @@ func BoardHandler(w http.ResponseWriter, r *http.Request) {
 // CatalogHandler handles displaying a board's threads in catalog view
 func CatalogHandler(w http.ResponseWriter, r *http.Request) {
 	// Get board slug from the URL
-	parts := strings.Split(r.URL.Path, "/")
-	if len(parts) < 3 || parts[1] == "" {
+	parts := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
+	if len(parts) < 2 || parts[0] == "" {
 		http.NotFound(w, r)
 		return
 	}
 
-	slug := parts[1]
+	slug := parts[0]
 
 	// Get board data
 	board, err := GetBoardBySlug(slug)
@@ -258,11 +258,11 @@ func CatalogHandler(w http.ResponseWriter, r *http.Request) {
 // ThreadHandler handles displaying a thread and its posts
 func ThreadHandler(w http.ResponseWriter, r *http.Request) {
 	// Get board slug and thread ID from the URL
-	// Format: /board-slug/thread/123
-	parts := strings.Split(r.URL.Path, "/")
-	if len(parts) < 4 || parts[2] != "thread" {
+	// Format: /board-slug/thread/123/
+	parts := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
+	if len(parts) < 3 || parts[1] != "thread" {
 		// Check if this is the legacy format
-		if parts[1] == "thread" {
+		if parts[0] == "thread" {
 			// Handle old format: /thread?id=123
 			threadIDStr := r.URL.Query().Get("id")
 			if threadIDStr == "" {
@@ -287,7 +287,7 @@ func ThreadHandler(w http.ResponseWriter, r *http.Request) {
 			board, err := GetBoardByID(thread.BoardID)
 			if err == nil {
 				// Redirect to new URL format
-				http.Redirect(w, r, "/"+board.Slug+"/thread/"+threadIDStr, http.StatusMovedPermanently)
+				http.Redirect(w, r, "/"+board.Slug+"/thread/"+threadIDStr+"/", http.StatusMovedPermanently)
 				return
 			}
 		}
@@ -296,8 +296,8 @@ func ThreadHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	boardSlug := parts[1]
-	threadIDStr := parts[3]
+	boardSlug := parts[0]
+	threadIDStr := parts[2]
 
 	threadID, err := strconv.Atoi(threadIDStr)
 	if err != nil {

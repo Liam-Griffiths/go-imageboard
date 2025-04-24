@@ -114,7 +114,7 @@
                 {{ end }}
                 <span class="post-date">{{ formatTime .Thread.CreatedAt }}</span>
                 <span class="post-num">No.{{ .Thread.ID }}</span>
-                [<a href="/{{ $.Board.Slug }}/thread/{{ .Thread.ID }}">Reply</a>]
+                [<a href="/{{ $.Board.Slug }}/thread/{{ .Thread.ID }}/">Reply</a>]
             </div>
 
             <div class="post-content">
@@ -123,13 +123,13 @@
                     <b>File:</b> {{ .FirstPost.ImagePath }}
                 </div>
                 <div>
-                    <a href="/images/{{ .FirstPost.ImagePath }}" target="_blank">
-                        <img src="/images/{{ .FirstPost.ImagePath }}" alt="Posted image" class="post-image">
+                    <a href="/images/{{ .FirstPost.ImagePath }}/" target="_blank">
+                        <img src="/images/{{ .FirstPost.ImagePath }}/" alt="Posted image" class="post-image">
                     </a>
                 </div>
                 {{ end }}
                 <div>
-                    <a href="/{{ $.Board.Slug }}/thread/{{ .Thread.ID }}"><b>{{ .Thread.Title }}</b></a>
+                    <a href="/{{ $.Board.Slug }}/thread/{{ .Thread.ID }}/"><b>{{ .Thread.Title }}</b></a>
                     <div>
                         <span>{{ .FirstPost.Content }}</span>
                     </div>

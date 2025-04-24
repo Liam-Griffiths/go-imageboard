@@ -58,34 +58,40 @@ func main() {
 	http.Handle("/static/", http.StripPrefix("/static/", fs))
 
 	// Set up image handler
-	http.HandleFunc("/images/", ImageHandler)
+	http.Handle("/images/", http.StripPrefix("/images/", ImageHandler))
 
 	// Auth routes
-	http.HandleFunc("/login", LoginHandler)
-	http.HandleFunc("/logout", LogoutHandler)
+	http.Handle("/login/", http.StripPrefix("/login/", LoginHandler))
+	http.Handle("/logout/", http.StripPrefix("/logout/", LogoutHandler))
 
 	// Admin routes
-	http.HandleFunc("/admin", AdminHomeHandler)
-	http.HandleFunc("/admin/boards", AdminBoardsHandler)
-	http.HandleFunc("/admin/create-board", AdminCreateBoardHandler)
-	http.HandleFunc("/admin/update-board", AdminUpdateBoardHandler)
-	http.HandleFunc("/admin/delete-board", AdminDeleteBoardHandler)
-	http.HandleFunc("/admin/delete-thread", AdminDeleteThreadHandler)
-	http.HandleFunc("/admin/delete-post", AdminDeletePostHandler)
-	http.HandleFunc("/admin/wipe-redis", WipeRedisHandler)
+	http.Handle("/admin/", http.StripPrefix("/admin/", AdminHomeHandler))
+	http.Handle("/admin/boards/", http.StripPrefix("/admin/boards/", AdminBoardsHandler))
+	http.Handle("/admin/create-board/", http.StripPrefix("/admin/create-board/", AdminCreateBoardHandler))
+	http.Handle("/admin/update-board/", http.StripPrefix("/admin/update-board/", AdminUpdateBoardHandler))
+	http.Handle("/admin/delete-board/", http.StripPrefix("/admin/delete-board/", AdminDeleteBoardHandler))
+	http.Handle("/admin/delete-thread/", http.StripPrefix("/admin/delete-thread/", AdminDeleteThreadHandler))
+	http.Handle("/admin/delete-post/", http.StripPrefix("/admin/delete-post/", AdminDeletePostHandler))
+	http.Handle("/admin/wipe-redis/", http.StripPrefix("/admin/wipe-redis/", WipeRedisHandler))
 
 	// Captcha route
-	http.HandleFunc("/captcha", CaptchaHandler)
+	http.Handle("/captcha/", http.StripPrefix("/captcha/", CaptchaHandler))
 
 	// Post creation routes
-	http.HandleFunc("/new-thread", NewThreadHandler)
-	http.HandleFunc("/new-post", NewPostHandler)
+	http.Handle("/new-thread/", http.StripPrefix("/new-thread/", NewThreadHandler))
+	http.Handle("/new-post/", http.StripPrefix("/new-post/", NewPostHandler))
 
 	// Home and board routes - this must be last as it handles path-based routing
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	http.Handle("/", func(w http.ResponseWriter, r *http.Request) {
 		// Root path shows home page
 		if r.URL.Path == "/" {
 			HomeHandler(w, r)
+			return
+		}
+
+		// Ensure path ends with a slash
+		if !strings.HasSuffix(r.URL.Path, "/") {
+			http.Redirect(w, r, r.URL.Path+"/", http.StatusMovedPermanently)
 			return
 		}
 
