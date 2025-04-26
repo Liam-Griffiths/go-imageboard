@@ -1,42 +1,42 @@
 {{ define "content" }}
 <div>
-  <div class="board-header">
-    <h1 class="board-title">Admin Dashboard</h1>
-    <div class="board-subtitle">Manage your imageboard</div>
-  </div>
-
-  <hr class="hr">
-
-  <div style="display: flex; flex-wrap: wrap; justify-content: space-between;">
-    <div style="width: 48%; background-color: #F0E0D6; border: 1px solid #D9BFB7; padding: 10px; margin-bottom: 10px;">
-      <h2 style="margin-top: 0; color: #800000;">Board Management</h2>
-      <p>Create, edit, and delete boards for your imageboard.</p>
-      <div style="text-align: center;">
-        <a href="/admin/boards" style="display: inline-block; background-color: #D9BFB7; color: #800000; padding: 5px 10px; text-decoration: none; border: 1px solid #800000;">
-          Manage Boards
-        </a>
-      </div>
+    <div class="text-center mb-3">
+        <h1 class="font-bold text-2xl text-board-text">Admin Dashboard</h1>
+        <div class="text-xs mt-1">Manage your imageboard</div>
     </div>
 
-    <div style="width: 48%; background-color: #F0E0D6; border: 1px solid #D9BFB7; padding: 10px; margin-bottom: 10px;">
-      <h2 style="margin-top: 0; color: #800000;">Database Maintenance</h2>
-      <p>Perform maintenance operations on your databases.</p>
-      <div style="text-align: center;">
-        <form method="post" action="/admin/wipe-redis" style="display: inline;">
-          <button type="submit"
-                  onclick="return confirm('⚠️ WARNING: This will delete ALL DATA in Redis (threads, posts, images). Continue?');"
-                  style="background-color: #D9BFB7; color: #FF0000; padding: 5px 10px; text-decoration: none; border: 1px solid #FF0000; cursor: pointer; font-family: inherit; font-size: inherit;">
-            Wipe Redis Data
-          </button>
-        </form>
-      </div>
+    <hr class="border-t border-thread-border my-3">
+
+    <div class="flex flex-wrap justify-between">
+        <div class="w-[48%] bg-thread-bg border border-thread-border p-3 mb-3">
+            <h2 class="mt-0 text-board-text">Board Management</h2>
+            <p>Create, edit, and delete boards for your imageboard.</p>
+            <div class="text-center">
+                <a href="/admin/boards" class="inline-block bg-thread-border text-board-text py-1 px-3 no-underline border border-board-text hover:bg-thread-border">
+                    Manage Boards
+                </a>
+            </div>
+        </div>
+
+        <div class="w-[48%] bg-thread-bg border border-thread-border p-3 mb-3">
+            <h2 class="mt-0 text-board-text">Database Maintenance</h2>
+            <p>Perform maintenance operations on your databases.</p>
+            <div class="text-center">
+                <form method="post" action="/admin/wipe-redis" class="inline">
+                    <button type="submit"
+                            onclick="return confirm('⚠️ WARNING: This will delete ALL DATA in Redis (threads, posts, images). Continue?');"
+                            class="bg-thread-border text-red-500 py-1 px-3 no-underline border border-red-500 cursor-pointer font-sans text-xs">
+                        Wipe Redis Data
+                    </button>
+                </form>
+            </div>
+        </div>
     </div>
-  </div>
 
-  <hr class="hr">
+    <hr class="border-t border-thread-border my-3">
 
-  <div style="text-align: center; margin-top: 10px;">
-    <a href="/" style="color: #800000;">[Return to Homepage]</a>
-  </div>
+    <div class="text-center mt-3">
+        <a href="/" class="text-board-text hover:underline">[Return to Homepage]</a>
+    </div>
 </div>
 {{ end }}

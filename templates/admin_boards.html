@@ -1,135 +1,137 @@
 {{ define "content" }}
 <div>
-  <div class="board-header">
-    <h1 class="board-title">Board Management</h1>
-    <div class="board-subtitle">Create, edit, and delete boards</div>
-  </div>
-
-  <hr class="hr">
-
-  <!-- Create New Board Form -->
-  <div style="background-color: #EEAA88; border: 1px solid #D9BFB7; padding: 10px; margin-bottom: 15px;">
-    <h3 style="margin-top: 0; color: #800000;">Create New Board</h3>
-    <form action="/admin/create-board" method="post">
-      <table style="width: 100%;">
-        <tr>
-          <td style="width: 100px;"><label for="slug" class="form-label">Slug</label></td>
-          <td>
-            <input type="text" id="slug" name="slug" required
-                   style="width: 100px;" placeholder="e.g., b"
-                   pattern="[a-z0-9]+" title="Lowercase letters and numbers only">
-            <span style="font-size: 9pt; color: #666;">(Lowercase letters and numbers only, no spaces)</span>
-          </td>
-        </tr>
-        <tr>
-          <td><label for="name" class="form-label">Name</label></td>
-          <td><input type="text" id="name" name="name" required style="width: 300px;" placeholder="e.g., Random"></td>
-        </tr>
-        <tr>
-          <td><label for="description" class="form-label">Description</label></td>
-          <td><textarea id="description" name="description" rows="2" style="width: 100%;" placeholder="Board description"></textarea></td>
-        </tr>
-        <tr>
-          <td></td>
-          <td><input type="submit" value="Create Board" class="submit-btn"></td>
-        </tr>
-      </table>
-    </form>
-  </div>
-
-  <hr class="hr">
-
-  <!-- Existing Boards -->
-  <h3 style="color: #800000;">Existing Boards</h3>
-
-  {{ if .Boards }}
-  <div style="margin-bottom: 20px;">
-    <table style="width: 100%; border-collapse: collapse;">
-      <thead>
-      <tr style="background-color: #D9BFB7;">
-        <th style="padding: 5px; text-align: left; border: 1px solid #800000;">Slug</th>
-        <th style="padding: 5px; text-align: left; border: 1px solid #800000;">Name</th>
-        <th style="padding: 5px; text-align: left; border: 1px solid #800000;">Description</th>
-        <th style="padding: 5px; text-align: center; border: 1px solid #800000;">Threads</th>
-        <th style="padding: 5px; text-align: center; border: 1px solid #800000;">Actions</th>
-      </tr>
-      </thead>
-      <tbody>
-      {{ range .Boards }}
-      <tr style="background-color: #F0E0D6;">
-        <td style="padding: 5px; border: 1px solid #D9BFB7;"><a href="/{{ .Slug }}">/{{ .Slug }}/</a></td>
-        <td style="padding: 5px; border: 1px solid #D9BFB7;">{{ .Name }}</td>
-        <td style="padding: 5px; border: 1px solid #D9BFB7;">{{ .Description }}</td>
-        <td style="padding: 5px; text-align: center; border: 1px solid #D9BFB7;">{{ .ThreadCount }}</td>
-        <td style="padding: 5px; text-align: center; border: 1px solid #D9BFB7;">
-          <button onclick="showEditForm({{ .ID }}, '{{ .Name }}', '{{ .Description }}')"
-                  style="background-color: #D9BFB7; border: 1px solid #800000; padding: 2px 5px; cursor: pointer;">
-            Edit
-          </button>
-          <form method="post" action="/admin/delete-board" style="display: inline;">
-            <input type="hidden" name="board_id" value="{{ .ID }}">
-            <button type="submit"
-                    onclick="return confirm('Are you sure you want to delete /{{ .Slug }}/? This will not delete threads.');"
-                    style="background-color: #D9BFB7; border: 1px solid #FF0000; padding: 2px 5px; color: #FF0000; cursor: pointer;">
-              Delete
-            </button>
-          </form>
-        </td>
-      </tr>
-      {{ end }}
-      </tbody>
-    </table>
-  </div>
-  {{ else }}
-  <div style="padding: 20px; text-align: center; background-color: #F0E0D6; border: 1px solid #D9BFB7;">
-    <span style="color: #666;">No boards created yet. Use the form above to create your first board.</span>
-  </div>
-  {{ end }}
-
-  <!-- Hidden Edit Form (shown via JavaScript) -->
-  <div id="editFormContainer" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 1000;">
-    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: #FFFFEE; padding: 20px; border: 2px solid #800000; width: 400px;">
-      <h3 style="margin-top: 0; color: #800000;">Edit Board</h3>
-      <form action="/admin/update-board" method="post" id="editForm">
-        <input type="hidden" id="edit_board_id" name="board_id">
-        <table style="width: 100%;">
-          <tr>
-            <td style="width: 100px;"><label for="edit_name" class="form-label">Name</label></td>
-            <td><input type="text" id="edit_name" name="name" required style="width: 100%;"></td>
-          </tr>
-          <tr>
-            <td><label for="edit_description" class="form-label">Description</label></td>
-            <td><textarea id="edit_description" name="description" rows="3" style="width: 100%;"></textarea></td>
-          </tr>
-        </table>
-        <div style="margin-top: 15px; text-align: right;">
-          <button type="button" onclick="hideEditForm()" style="background-color: #D9BFB7; border: 1px solid #800000; padding: 5px 10px; margin-right: 10px; cursor: pointer;">
-            Cancel
-          </button>
-          <input type="submit" value="Save Changes" style="background-color: #D9BFB7; border: 1px solid #800000; padding: 5px 10px; cursor: pointer;">
-        </div>
-      </form>
+    <div class="text-center mb-3">
+        <h1 class="font-bold text-2xl text-board-text">Board Management</h1>
+        <div class="text-xs mt-1">Create, edit, and delete boards</div>
     </div>
-  </div>
 
-  <hr class="hr">
+    <hr class="border-t border-thread-border my-3">
 
-  <div style="text-align: center; margin-top: 10px;">
-    <a href="/admin" style="color: #800000;">[Return to Admin Dashboard]</a>
-  </div>
+    <!-- Create New Board Form -->
+    <div class="bg-form-bg border border-thread-border p-3 mb-4">
+        <h3 class="mt-0 text-board-text">Create New Board</h3>
+        <form action="/admin/create-board" method="post">
+            <table class="w-full">
+                <tr>
+                    <td class="w-[100px]"><label for="slug" class="font-bold text-xs">Slug</label></td>
+                    <td>
+                        <input type="text" id="slug" name="slug" required
+                               class="w-[100px] border border-gray-400 p-1 text-xs" placeholder="e.g., b"
+                               pattern="[a-z0-9]+" title="Lowercase letters and numbers only">
+                        <span class="text-[9pt] text-gray-600">(Lowercase letters and numbers only, no spaces)</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td><label for="name" class="font-bold text-xs">Name</label></td>
+                    <td><input type="text" id="name" name="name" required class="w-[300px] border border-gray-400 p-1 text-xs" placeholder="e.g., Random"></td>
+                </tr>
+                <tr>
+                    <td><label for="description" class="font-bold text-xs">Description</label></td>
+                    <td><textarea id="description" name="description" rows="2" class="w-full border border-gray-400 p-1 text-xs" placeholder="Board description"></textarea></td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td>
+                        <input type="submit" value="Create Board" class="bg-thread-bg text-board-text font-bold border border-board-text px-3 py-1 cursor-pointer hover:bg-thread-border mt-2">
+                    </td>
+                </tr>
+            </table>
+        </form>
+    </div>
 
-  <!-- JavaScript for edit form -->
-  <script>
-    function showEditForm(id, name, description) {
-      document.getElementById('edit_board_id').value = id;
-      document.getElementById('edit_name').value = name;
-      document.getElementById('edit_description').value = description;
-      document.getElementById('editFormContainer').style.display = 'block';
-    }
+    <hr class="border-t border-thread-border my-3">
 
-    function hideEditForm() {
-      document.getElementById('editFormContainer').style.display = 'none';
-    }
-  </script>
+    <!-- Existing Boards -->
+    <h3 class="text-board-text">Existing Boards</h3>
+
+    {{ if .Boards }}
+    <div class="mb-5">
+        <table class="w-full border-collapse">
+            <thead>
+            <tr class="bg-thread-border">
+                <th class="p-1 text-left border border-board-text">Slug</th>
+                <th class="p-1 text-left border border-board-text">Name</th>
+                <th class="p-1 text-left border border-board-text">Description</th>
+                <th class="p-1 text-center border border-board-text">Threads</th>
+                <th class="p-1 text-center border border-board-text">Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            {{ range .Boards }}
+            <tr class="bg-thread-bg">
+                <td class="p-1 border border-thread-border"><a href="/{{ .Slug }}/" class="hover:underline">/{{ .Slug }}/</a></td>
+                <td class="p-1 border border-thread-border">{{ .Name }}</td>
+                <td class="p-1 border border-thread-border">{{ .Description }}</td>
+                <td class="p-1 text-center border border-thread-border">{{ .ThreadCount }}</td>
+                <td class="p-1 text-center border border-thread-border">
+                    <button onclick="showEditForm({{ .ID }}, '{{ .Name }}', '{{ .Description }}')"
+                            class="bg-thread-border border border-board-text px-1 py-0.5 cursor-pointer">
+                        Edit
+                    </button>
+                    <form method="post" action="/admin/delete-board" class="inline">
+                        <input type="hidden" name="board_id" value="{{ .ID }}">
+                        <button type="submit"
+                                onclick="return confirm('Are you sure you want to delete /{{ .Slug }}/? This will not delete threads.');"
+                                class="bg-thread-border border border-red-500 px-1 py-0.5 text-red-500 cursor-pointer">
+                            Delete
+                        </button>
+                    </form>
+                </td>
+            </tr>
+            {{ end }}
+            </tbody>
+        </table>
+    </div>
+    {{ else }}
+    <div class="p-5 text-center bg-thread-bg border border-thread-border">
+        <span class="text-gray-600">No boards created yet. Use the form above to create your first board.</span>
+    </div>
+    {{ end }}
+
+    <!-- Hidden Edit Form (shown via JavaScript) -->
+    <div id="editFormContainer" class="hidden fixed inset-0 bg-black bg-opacity-50 z-10">
+        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-board-bg p-5 border-2 border-board-text w-[400px]">
+            <h3 class="mt-0 text-board-text">Edit Board</h3>
+            <form action="/admin/update-board" method="post" id="editForm">
+                <input type="hidden" id="edit_board_id" name="board_id">
+                <table class="w-full">
+                    <tr>
+                        <td class="w-[100px]"><label for="edit_name" class="font-bold text-xs">Name</label></td>
+                        <td><input type="text" id="edit_name" name="name" required class="w-full border border-gray-400 p-1 text-xs"></td>
+                    </tr>
+                    <tr>
+                        <td><label for="edit_description" class="font-bold text-xs">Description</label></td>
+                        <td><textarea id="edit_description" name="description" rows="3" class="w-full border border-gray-400 p-1 text-xs"></textarea></td>
+                    </tr>
+                </table>
+                <div class="mt-4 text-right">
+                    <button type="button" onclick="hideEditForm()" class="bg-thread-border border border-board-text px-3 py-1 mr-3 cursor-pointer">
+                        Cancel
+                    </button>
+                    <input type="submit" value="Save Changes" class="bg-thread-border border border-board-text px-3 py-1 cursor-pointer">
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <hr class="border-t border-thread-border my-3">
+
+    <div class="text-center mt-3">
+        <a href="/admin" class="text-board-text hover:underline">[Return to Admin Dashboard]</a>
+    </div>
+
+    <!-- JavaScript for edit form -->
+    <script>
+        function showEditForm(id, name, description) {
+            document.getElementById('edit_board_id').value = id;
+            document.getElementById('edit_name').value = name;
+            document.getElementById('edit_description').value = description;
+            document.getElementById('editFormContainer').style.display = 'block';
+        }
+
+        function hideEditForm() {
+            document.getElementById('editFormContainer').style.display = 'none';
+        }
+    </script>
 </div>
 {{ end }}

@@ -1,43 +1,43 @@
 {{ define "content" }}
 <div>
-    <div class="board-header">
-        <h1 class="board-title">Welcome to the Imageboard</h1>
-        <div class="board-subtitle">Select a board to browse</div>
+    <div class="text-center mb-3">
+        <h1 class="font-bold text-2xl text-board-text">Welcome to the Imageboard</h1>
+        <div class="text-[12px] mt-1">Select a board to browse</div>
     </div>
 
-    <hr class="hr">
+    <hr class="border-t border-thread-border my-3">
 
     <!-- Board Listing -->
     {{ if .Boards }}
-    <div style="padding: 10px;">
-        <div style="display: flex; flex-wrap: wrap; justify-content: space-between;">
+    <div class="p-3">
+        <div class="flex flex-wrap justify-between">
             {{ range .Boards }}
-            <div style="width: 49%; margin-bottom: 10px; background-color: #F0E0D6; padding: 5px; border: 1px solid #D9BFB7;">
-                <h3 style="margin: 0; padding: 0; display: flex; justify-content: space-between;">
-                    <a href="/{{ .Slug }}" style="font-weight: bold; color: #800000;">/{{ .Slug }}/ - {{ .Name }}</a>
-                    <span style="font-weight: normal; color: #666; font-size: 9pt;">{{ .ThreadCount }} threads</span>
+            <div class="w-[49%] mb-3 bg-thread-bg p-1 border border-thread-border">
+                <h3 class="m-0 p-0 flex justify-between">
+                    <a href="/{{ .Slug }}" class="font-bold text-board-text hover:underline text-[10pt]">/{{ .Slug }}/ - {{ .Name }}</a>
+                    <span class="font-normal text-gray-600 text-[9pt]">{{ .ThreadCount }} threads</span>
                 </h3>
-                <div style="margin-top: 5px; font-size: 9pt; color: #666;">
+                <div class="mt-1 text-[9pt] text-gray-600">
                     {{ .Description }}
                 </div>
-                <div style="margin-top: 5px; font-size: 9pt; display: flex; justify-content: space-between;">
-                    <a href="/{{ .Slug }}">View</a>
-                    <a href="/{{ .Slug }}/catalog">Catalog</a>
+                <div class="mt-1 text-[9pt] flex justify-between">
+                    <a href="/{{ .Slug }}/" class="text-link-color hover:underline">View</a>
+                    <a href="/{{ .Slug }}/catalog" class="text-link-color hover:underline">Catalog</a>
                 </div>
             </div>
             {{ end }}
         </div>
     </div>
     {{ else }}
-    <div style="padding: 20px; text-align: center; background-color: #F0E0D6; border: 1px solid #D9BFB7;">
-        <span style="color: #666;">No boards available. Admin needs to create some boards first.</span>
+    <div class="p-5 text-center bg-thread-bg border border-thread-border">
+        <span class="text-gray-600 text-[10pt]">No boards available. Admin needs to create some boards first.</span>
     </div>
     {{ end }}
 
-    <hr class="hr">
+    <hr class="border-t border-thread-border my-3">
 
-    <div style="text-align: center; margin-top: 10px;">
-        <a href="/admin" style="color: #FF0000;">[Admin Panel]</a>
+    <div class="text-center mt-3">
+        <a href="/admin" class="text-red-500 hover:underline text-[10pt]">[Admin Panel]</a>
     </div>
 </div>
 {{ end }}

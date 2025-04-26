@@ -1,185 +1,165 @@
 {{ define "content" }}
-<style>
-  @media (max-width: 768px) {
-    body {
-      font-size: 14px;
-      padding: 5px;
-    }
-
-    .container {
-      max-width: 100%;
-      padding: 0;
-    }
-
-    .board-title {
-      font-size: 20px;
-    }
-
-    .board-subtitle {
-      font-size: 12px;
-    }
-
-    .thread {
-      padding: 8px;
-      margin-bottom: 15px;
-    }
-
-    .post {
-      padding: 8px;
-      margin-bottom: 8px;
-    }
-
-    .post-info {
-      font-size: 12px;
-      margin-bottom: 8px;
-    }
-
-    .post-content {
-      font-size: 14px;
-      line-height: 1.4;
-    }
-
-    /* Improve touch targets */
-    .board-nav a, .post-info a {
-      padding: 5px;
-      display: inline-block;
-    }
-  }
-</style>
 <div>
-    <div class="board-header">
-        <h1 class="board-title">/{{ .Board.Slug }}/ - {{ .Board.Name }}</h1>
-        <div class="board-subtitle">{{ .Board.Description }}</div>
+    <div class="text-center mb-3">
+        <h1 class="font-bold text-2xl text-board-text">/{{ .Board.Slug }}/ - {{ .Board.Name }}</h1>
+        <div class="text-[12px] mt-1">{{ .Board.Description }}</div>
     </div>
 
-    <div class="board-nav">
-        [<a href="/">Home</a>]
-        [<a href="/{{ .Board.Slug }}/catalog">Catalog</a>]
+    <div class="text-center my-1">
+        [<a href="/" class="text-link-color hover:underline">[Home]</a>]
+        [<a href="/{{ .Board.Slug }}/catalog" class="text-link-color hover:underline">[Catalog]</a>]
     </div>
 
-    <hr class="hr">
+    <hr class="border-t border-thread-border my-3">
 
     <!-- New Thread Form -->
-    <div class="form-box">
-        <form action="/new-thread" method="post" enctype="multipart/form-data" style="display: flex; flex-direction: column;">
+    <div class="bg-[#F0D0B6] border border-thread-border p-2 mb-4">
+        <form action="/new-thread" method="post" enctype="multipart/form-data">
             <input type="hidden" name="board_id" value="{{ .Board.ID }}">
 
-            <div style="margin-bottom: 10px;">
-                <label class="form-label" style="display: block; margin-bottom: 5px;">Name</label>
-                <input type="text" name="name" value="Anonymous" disabled style="width: 100%; box-sizing: border-box;">
-            </div>
-
-            <div style="margin-bottom: 10px;">
-                <label class="form-label" style="display: block; margin-bottom: 5px;">Subject</label>
-                <input type="text" id="title" name="title" required style="width: 100%; box-sizing: border-box;">
-            </div>
-
-            <div style="margin-bottom: 10px;">
-                <label class="form-label" style="display: block; margin-bottom: 5px;">Comment</label>
-                <textarea id="content" name="content" rows="4" required style="width: 100%; box-sizing: border-box;"></textarea>
-            </div>
-
-            <div style="margin-bottom: 10px;">
-                <label class="form-label" style="display: block; margin-bottom: 5px;">File</label>
-                <input type="file" id="image" name="image" accept="image/*" style="width: 100%;">
-            </div>
-
-            <div style="margin-bottom: 10px;">
-                <label class="form-label" style="display: block; margin-bottom: 5px;">Verification</label>
-                <div class="g-recaptcha" data-sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"></div>
-            </div>
-
-            <div style="margin-top: 10px;">
-                <input type="submit" value="New Thread" class="submit-btn" style="padding: 8px 12px;">
-            </div>
+            <table class="w-full">
+                <tr>
+                    <td class="font-bold w-24">Name</td>
+                    <td>
+                        <input type="text" name="name" value="Anonymous" readonly class="w-full box-border border border-gray-400 p-0.5 text-[10pt] font-sans bg-[#FFFFFF]">
+                    </td>
+                </tr>
+                <tr>
+                    <td class="font-bold w-24">Subject</td>
+                    <td>
+                        <input type="text" id="title" name="title" required class="w-full box-border border border-gray-400 p-0.5 text-[10pt] font-sans">
+                    </td>
+                </tr>
+                <tr>
+                    <td class="font-bold align-top">Comment</td>
+                    <td>
+                        <textarea id="content" name="content" rows="4" required class="w-full box-border border border-gray-400 p-0.5 text-[10pt] font-sans"></textarea>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="font-bold">File</td>
+                    <td>
+                        <input type="file" id="image" name="image" accept="image/*" class="text-[10pt] font-sans">
+                        <span>No file selected.</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="font-bold">Verification</td>
+                    <td>
+                        <div class="g-recaptcha" data-sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"></div>
+                    </td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td class="pt-2">
+                        <input type="submit" value="New Thread" class="bg-thread-bg text-board-text font-bold border border-board-text px-1 py-0.5 cursor-pointer hover:bg-thread-border text-[10pt] font-sans">
+                    </td>
+                </tr>
+            </table>
         </form>
     </div>
 
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 
-    <hr class="hr">
+    <style>
+        /* Greentext styling */
+        .greentext {
+            color: #789922;
+        }
+    </style>
+
+    <hr class="border-t border-thread-border my-3">
 
     <!-- Thread Listing -->
     {{ if .ThreadsWithPosts }}
     {{ range .ThreadsWithPosts }}
-    <div class="thread">
-        <div class="post">
-            <div class="post-info">
-                Anonymous 
+    <div class="bg-thread-bg border border-thread-border mb-5 p-1">
+        <div class="p-1">
+            <div class="text-name-color font-bold text-[10pt]">
+                <input type="checkbox" class="mr-1 align-middle">
+                Anonymous
                 {{ if .FirstPost.UserID }}
-                <span class="user-id" style="color: #117743; font-weight: bold;">(ID: {{ .FirstPost.UserID }})</span>
+                <span class="text-name-color font-bold">(ID: {{ .FirstPost.UserID }})</span>
                 {{ end }}
                 {{ if .FirstPost.CountryCode }}
-                <span class="country-code">({{ .FirstPost.CountryCode }})</span>
+                <span>({{ .FirstPost.CountryCode }})</span>
                 {{ end }}
-                <span class="post-date">{{ formatTime .Thread.CreatedAt }}</span>
-                <span class="post-num">No.{{ .Thread.ID }}</span>
-                [<a href="/{{ $.Board.Slug }}/thread/{{ .Thread.ID }}">Reply</a>]
+                <span class="text-black font-normal">{{ formatTime .Thread.CreatedAt }}</span>
+                <span class="text-black font-normal">
+            No.<a href="/{{ $.Board.Slug }}/thread/{{ .Thread.ID }}#p{{ .FirstPost.ID }}" class="text-black no-underline hover:underline">{{ .FirstPost.ID }}</a>
+          </span>
+                <a href="/{{ $.Board.Slug }}/thread/{{ .Thread.ID }}" class="text-link-color ml-1">▶</a>
             </div>
 
-            <div class="post-content">
+            <div class="mt-1">
                 {{ if .FirstPost.ImagePath }}
-                <div class="file-info">
-                    <b>File:</b> {{ .FirstPost.ImagePath }}
+                <div class="text-[9pt] text-gray-600 mt-1 mb-1">
+                    File: <a href="/images/{{ .FirstPost.ImagePath }}" target="_blank" class="text-link-color hover:underline">{{ .FirstPost.ImagePath }}</a> ({{ .FirstPost.ImagePath }} KB, 1800x2100)
                 </div>
-                <div>
-                    <a href="/images/{{ .FirstPost.ImagePath }}" target="_blank">
-                        <img src="/images/{{ .FirstPost.ImagePath }}" alt="Posted image" class="post-image">
+                <div class="image-container">
+                    <a href="/{{ $.Board.Slug }}/thread/{{ .Thread.ID }}">
+                        <img src="/images/{{ .FirstPost.ImagePath }}" alt="Posted image" class="max-w-[125px] max-h-[125px] mr-4 float-left post-image">
                     </a>
                 </div>
                 {{ end }}
                 <div>
-                    <a href="/{{ $.Board.Slug }}/thread/{{ .Thread.ID }}"><b>{{ .Thread.Title }}</b></a>
-                    <div>
-                        <span>{{ .FirstPost.Content }}</span>
+                    <a href="/{{ $.Board.Slug }}/thread/{{ .Thread.ID }}" class="font-bold text-red-800">{{ .Thread.Title }}</a>
+                    <div class="post-content" data-post-id="{{ .FirstPost.ID }}">
+                        {{ .FirstPost.Content }}
                     </div>
                 </div>
-                <div class="clear"></div>
+                <div class="clear-both"></div>
             </div>
 
             <!-- Latest Posts -->
             {{ if .LatestPosts }}
-            <div style="margin-top: 10px; border-top: 1px dashed #D9BFB7; padding-top: 5px;">
-                <div style="font-size: 9pt; color: #800000; margin-bottom: 5px;">Latest replies:</div>
+            <div class="mt-3 border-t border-dashed border-thread-border pt-1">
+                <div class="text-[9pt] text-board-text mb-1">Latest replies:</div>
                 {{ range .LatestPosts }}
-                <div class="post" style="background-color: #F0E0D6; margin-bottom: 5px; padding: 5px; border: 1px solid #D9BFB7;">
-                    <div class="post-info" style="font-size: 9pt;">
-                        Anonymous 
+                <div class="bg-thread-bg mb-1 p-1 border border-thread-border" id="p{{ .ID }}">
+                    <div class="text-[9pt]">
+                        <input type="checkbox" class="mr-1 align-middle">
+                        Anonymous
                         {{ if .UserID }}
-                        <span class="user-id" style="color: #117743; font-weight: bold;">(ID: {{ .UserID }})</span>
+                        <span class="text-name-color font-bold">(ID: {{ .UserID }})</span>
                         {{ end }}
                         {{ if .CountryCode }}
-                        <span class="country-code">({{ .CountryCode }})</span>
+                        <span>({{ .CountryCode }})</span>
                         {{ end }}
-                        <span class="post-date">{{ formatTime .CreatedAt }}</span>
-                        <span class="post-num">No.{{ .ID }}</span>
+                        <span>{{ formatTime .CreatedAt }}</span>
+                        <span>
+                No.<a href="/{{ $.Board.Slug }}/thread/{{ $.Thread.ID }}#p{{ .ID }}" class="text-black no-underline hover:underline">{{ .ID }}</a>
+              </span>
                     </div>
                     {{ if .ImagePath }}
                     <div>
-                        <a href="/images/{{ .ImagePath }}" target="_blank">
-                            <img src="/images/{{ .ImagePath }}" alt="Posted image" style="max-width: 75px; max-height: 75px; margin-right: 5px; float: left;">
+                        <div class="text-[9pt] text-gray-600 mt-1">
+                            File: <a href="/images/{{ .ImagePath }}" target="_blank" class="text-link-color hover:underline">{{ .ImagePath }}</a>
+                        </div>
+                        <a href="/{{ $.Board.Slug }}/thread/{{ $.Thread.ID }}#p{{ .ID }}">
+                            <img src="/images/{{ .ImagePath }}" alt="Posted image" class="max-w-[75px] max-h-[75px] mr-1 float-left post-image">
                         </a>
                     </div>
                     {{ end }}
-                    <div class="post-content" style="font-size: 9pt;">
+                    <div class="text-[9pt] post-content" data-thread-id="{{ $.Thread.ID }}" data-post-id="{{ .ID }}">
                         {{ truncate .Content 100 }}
                     </div>
-                    <div class="clear"></div>
+                    <div class="clear-both"></div>
                 </div>
                 {{ end }}
-                <div style="text-align: right; margin-top: 5px;">
-                    <a href="/{{ $.Board.Slug }}/thread/{{ .Thread.ID }}" style="font-size: 9pt; color: #800000;">View all {{ .Thread.PostCount }} replies &raquo;</a>
+                <div class="text-right mt-1">
+                    <a href="/{{ $.Board.Slug }}/thread/{{ .Thread.ID }}" class="text-[9pt] text-board-text">View all {{ .Thread.PostCount }} replies &raquo;</a>
                 </div>
             </div>
             {{ end }}
 
-            <div style="margin-top: 5px;">
-                <span style="color: #666;">{{ .Thread.PostCount }} posts</span> |
-                <span style="color: #666;">Last update: {{ formatTime .Thread.UpdatedAt }}</span>
+            <div class="mt-1">
+                <span class="text-gray-600 text-[10pt]">{{ .Thread.PostCount }} posts</span> |
+                <span class="text-gray-600 text-[10pt]">Last update: {{ formatTime .Thread.UpdatedAt }}</span>
                 {{ if $.IsAdmin }}
-                <form action="/admin/delete-thread" method="post" style="display: inline; margin-left: 10px;" onsubmit="return confirm('Are you sure you want to delete this thread?');">
-                  <input type="hidden" name="thread_id" value="{{ .Thread.ID }}">
-                  <button type="submit" class="delete-btn" style="color: red; background: none; border: none; cursor: pointer; font-size: 12px;">Delete Thread</button>
+                <form action="/admin/delete-thread" method="post" class="inline ml-3" onsubmit="return confirm('Are you sure you want to delete this thread?');">
+                    <input type="hidden" name="thread_id" value="{{ .Thread.ID }}">
+                    <button type="submit" class="text-red-500 bg-transparent border-none cursor-pointer text-[10pt]">Delete Thread</button>
                 </form>
                 {{ end }}
             </div>
@@ -187,18 +167,76 @@
     </div>
     {{ end }}
     {{ else }}
-    <div class="thread">
-        <div class="post-content" style="text-align: center; padding: 20px;">
-            <span style="color: #666;">No threads yet. Be the first to create one!</span>
+    <div class="bg-thread-bg">
+        <div class="text-center p-5">
+            <span class="text-gray-600 text-[10pt]">No threads yet. Be the first to create one!</span>
         </div>
     </div>
     {{ end }}
 
-    <hr class="hr">
+    <script>
+        // Process post content to make >>##### links clickable and handle greentext
+        document.addEventListener('DOMContentLoaded', function() {
+            const postContents = document.querySelectorAll('.post-content');
 
-    <div class="board-nav">
-        [<a href="/">Home</a>]
-        [<a href="/{{ .Board.Slug }}/catalog">Catalog</a>]
+            postContents.forEach(function(content) {
+                const threadId = content.dataset.threadId || "";
+                const postId = content.dataset.postId || "";
+
+                // Replace >>12345 with links to the post
+                if (threadId) {
+                    // We're in a reply post in the latest replies section
+                    content.innerHTML = content.innerHTML.replace(
+                        /&gt;&gt;(\d+)/g,
+                        '<a href="/{{ $.Board.Slug }}/thread/' + threadId + '#p$1" class="text-link-color">&gt;&gt;$1</a>'
+                    );
+                } else {
+                    // We're in an OP post
+                    content.innerHTML = content.innerHTML.replace(
+                        /&gt;&gt;(\d+)/g,
+                        '<a href="/{{ $.Board.Slug }}/thread/{{ $.Thread.ID }}#p$1" class="text-link-color">&gt;&gt;$1</a>'
+                    );
+                }
+
+                // Process greentext
+                processGreentext(content);
+            });
+        });
+
+        // Process greentext
+        function processGreentext(contentElement) {
+            const html = contentElement.innerHTML;
+
+            // Split by newlines and process each line
+            const lines = html.split('<br>');
+            let processedHtml = '';
+
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+
+                // Check if line starts with '>'
+                if (line.trim().startsWith('&gt;') && !line.trim().startsWith('&gt;&gt;')) {
+                    // It's greentext, but not a post reference
+                    processedHtml += '<span class="greentext">' + line + '</span>';
+                } else {
+                    processedHtml += line;
+                }
+
+                // Add back the newline except for the last line
+                if (i < lines.length - 1) {
+                    processedHtml += '<br>';
+                }
+            }
+
+            contentElement.innerHTML = processedHtml;
+        }
+    </script>
+
+    <hr class="border-t border-thread-border my-3">
+
+    <div class="text-center my-1">
+        [<a href="/" class="text-link-color hover:underline">[Home]</a>]
+        [<a href="/{{ .Board.Slug }}/catalog" class="text-link-color hover:underline">[Catalog]</a>]
     </div>
 </div>
 {{ end }}

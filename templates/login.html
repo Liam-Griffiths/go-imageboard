@@ -1,40 +1,42 @@
 {{ define "content" }}
 <div>
-  <div class="board-header">
-    <h1 class="board-title">Admin Login</h1>
-    <div class="board-subtitle">Please login to access the admin panel</div>
-  </div>
+    <div class="text-center mb-3">
+        <h1 class="font-bold text-2xl text-board-text">Admin Login</h1>
+        <div class="text-xs mt-1">Please login to access the admin panel</div>
+    </div>
 
-  <hr class="hr">
+    <hr class="border-t border-thread-border my-3">
 
-  <div class="form-box">
-    <form action="/login" method="post">
-      {{ if .Error }}
-      <div style="color: #FF0000; margin-bottom: 10px; text-align: center;">
-        {{ .Error }}
-      </div>
-      {{ end }}
-      <table style="width: 100%;">
-        <tr>
-          <td style="width: 100px;"><label for="username" class="form-label">Username</label></td>
-          <td><input type="text" id="username" name="username" required style="width: 200px;"></td>
-        </tr>
-        <tr>
-          <td><label for="password" class="form-label">Password</label></td>
-          <td><input type="password" id="password" name="password" required style="width: 200px;"></td>
-        </tr>
-        <tr>
-          <td></td>
-          <td><input type="submit" value="Login" class="submit-btn"></td>
-        </tr>
-      </table>
-    </form>
-  </div>
+    <div class="bg-form-bg border border-thread-border p-3 mb-4">
+        <form action="/login" method="post">
+            {{ if .Error }}
+            <div class="text-red-500 mb-3 text-center">
+                {{ .Error }}
+            </div>
+            {{ end }}
+            <table class="w-full">
+                <tr>
+                    <td class="w-[100px]"><label for="username" class="font-bold text-xs">Username</label></td>
+                    <td><input type="text" id="username" name="username" required class="w-[200px] border border-gray-400 p-1 text-xs"></td>
+                </tr>
+                <tr>
+                    <td><label for="password" class="font-bold text-xs">Password</label></td>
+                    <td><input type="password" id="password" name="password" required class="w-[200px] border border-gray-400 p-1 text-xs"></td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td>
+                        <input type="submit" value="Login" class="bg-thread-bg text-board-text font-bold border border-board-text px-3 py-1 cursor-pointer hover:bg-thread-border mt-2">
+                    </td>
+                </tr>
+            </table>
+        </form>
+    </div>
 
-  <hr class="hr">
+    <hr class="border-t border-thread-border my-3">
 
-  <div style="text-align: center; margin-top: 10px;">
-    <a href="/" style="color: #800000;">[Return to Homepage]</a>
-  </div>
+    <div class="text-center mt-3">
+        <a href="/" class="text-board-text hover:underline">[Return to Homepage]</a>
+    </div>
 </div>
 {{ end }}
