@@ -1,6 +1,7 @@
 # Go Imageboard
 
-A simple imageboard application written in Go, using PostgreSQL for persistent storage and Redis for caching.
+A simple imageboard application written in Go, using PostgreSQL for persistent storage and Redis for caching. 
+Not vibe coded. This is a project for actually doing some old fashioned programming.
 
 ## WIP - Todo
 
