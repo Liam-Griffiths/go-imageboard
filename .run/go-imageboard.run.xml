@@ -2,12 +2,10 @@
   <configuration default="false" name="go-imageboard" type="GoApplicationRunConfiguration" factoryName="Go Application">
     <module name="go-imageboard" />
     <working_directory value="$PROJECT_DIR$" />
-    <kind value="FILE" />
-    <filePath value="$PROJECT_DIR$/main.go" />
+    <kind value="DIRECTORY" />
     <package value="main" />
-    <envs>
-      <env name="PORT" value="8080" />
-    </envs>
+    <directory value="$PROJECT_DIR$" />
+    <filePath value="$PROJECT_DIR$/main.go" />
     <method v="2" />
   </configuration>
 </component>
